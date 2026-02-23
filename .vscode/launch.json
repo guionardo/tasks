@@ -8,9 +8,9 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/tasks.py",
+            "program": "${workspaceFolder}/src/tasks/__main__.py",
             "console": "integratedTerminal",
-            // "cwd": "${workspaceFolder}/tasks",
+             "cwd": "${workspaceFolder}/src/tasks",
             "justMyCode": true
         }
     ]

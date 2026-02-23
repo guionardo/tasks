@@ -1,6 +1,8 @@
+import json
 import os
 import shutil
 import subprocess
+import tempfile
 from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
@@ -85,6 +87,8 @@ def new_task(
             datetime.fromtimestamp(new_task_folder.stat().st_ctime),
             datetime.now(),
         )
+
+        task.oneliner = get_task_oneliner(task_description)
     except Exception as e:
         task_dict['error'] = f'* Error: {e}'
 
@@ -115,13 +119,26 @@ def read_task_from_directory(directory: Path) -> Task | None:
 
     created_at = datetime.fromtimestamp(directory.stat().st_ctime)
     updated_at = datetime.fromtimestamp(directory.stat().st_mtime)
-    return Task(
+
+    task = Task(
         id=task_id,
         repo=repo,
         status=status,
         created_at=created_at,
         updated_at=updated_at,
     )
+
+    oneliner_file = directory / 'TASK' / 'oneliner.txt'
+    if oneliner_file.exists():
+        with open(oneliner_file.as_posix(), 'r') as f:
+            task.oneliner = f.read().strip()
+    else:
+        os.makedirs(oneliner_file.parent, exist_ok=True)
+        task.oneliner = get_task_oneliner(task.description)
+        with open(oneliner_file.as_posix(), 'w') as f:
+            f.write(task.oneliner.strip())
+
+    return task
 
 
 def clone_repository(remote_url: str, new_task_folder: Path) -> Path:
@@ -269,3 +286,50 @@ def archive_task(config: Config, task: Task) -> str | None:
         return f'Task {task.id} archived to {archive_file}'
     except Exception as e:
         raise ValueError(f'Failed to archive task: {e}')
+
+
+def get_task_oneliner(description: str) -> str:
+    if not description:
+        return ''
+    if description.count('\n') == 0:
+        return description.strip()
+    default_oneliner = ''.join(description.splitlines()[:1])
+    if not shutil.which('agent'):  # Use cursor agent to generate the oneliner
+        return default_oneliner
+
+    with tempfile.TemporaryDirectory(dir='.') as tmp_dir:
+        task_file = Path(tmp_dir) / 'task.md'
+        task_file.write_text(description)
+        prompt = f'create just a one line description from the content of @{task_file.as_posix()}. Output only the one line description, no other text.'
+
+        result = subprocess.run(
+            args=[
+                'agent',
+                '--output-format',
+                'json',
+                '--print',
+                '--trust',
+                prompt,
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            return default_oneliner
+
+        json_result = json.loads(result.stdout)
+        if (
+            json_result['type'] == 'result'
+            and json_result['subtype'] == 'success'
+            and not json_result['is_error']
+        ):
+            return json_result['result']
+
+        return json_result['result']
+
+    # args = ['agent', 'generate', description]
+
+    # agent "create a one line description from the content of @TASK/125364-0.md" --output-format json --print
+
+    # {"type":"result","subtype":"success","is_error":false,"duration_ms":7172,"duration_api_ms":7172,"result":"Implement E2E tests for Company endpoints covering listing with filters/pagination, ID lookup, cache behavior, and context.","session_id":"198eb041-fdd9-401c-8646-961bd30e5e4f","request_id":"21e30550-9306-4a91-a529-9287a6245221"}

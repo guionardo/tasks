@@ -16,8 +16,3 @@ SelectionList {
     border: solid $accent;
     width: 1fr;
 }
-
-Pretty {
-    width: 1fr;
-    border: solid $accent;
-}

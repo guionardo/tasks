@@ -109,9 +109,10 @@ class Tasks(Screen, ContextClass):
         get_logger(__name__).info('Current task: %s', self.current_task)
 
     def on_mount(self) -> None:
+        if doing_tasks := self.query_one('#doing_tasks'):
+            doing_tasks.focus()
+
         self.refresh_bindings()
-        self.query_one('#done_tasks').focus()
-        self.query_one('#doing_tasks').focus()
 
     def action_new_task(self) -> None:
         def check_new_task_result(result) -> None:
@@ -224,5 +225,5 @@ class Tasks(Screen, ContextClass):
 
 def task_tooltip(task) -> str:
     return (
-        f'{task.repo.project_name}\n{task.repo.repository_name}\n{task.short_directory}'
+        f'{task.repo.project_name}\n{task.repo.repository_name}\n{task.short_directory}\n\n{task.oneliner}'
     )

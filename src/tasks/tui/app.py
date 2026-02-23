@@ -1,12 +1,13 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header
 
+from tasks import __version__
 from tasks.service.logging_service import get_logger, setup_logging
 from tasks.tui.logs_screen import Logs
 from tasks.tui.settings_screen import Setup
 from tasks.tui.tasks_screen import Tasks
 
-from tasks import __version__
+
 class MainApp(App):
     CSS_PATH = 'main.tcss'
     TITLE = 'Task Manager'

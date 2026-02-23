@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
@@ -13,6 +13,7 @@ class Task:
     status: TaskStatus
     created_at: datetime
     updated_at: datetime
+    oneliner: str = field(default='', init=False)
 
     @property
     def name(self) -> str:
@@ -30,6 +31,10 @@ class Task:
 
     @property
     def description(self) -> str:
+        task_description_file = Path(self.repo.directory) / 'TASK' / f'{self.id}.md'
+        if task_description_file.exists():
+            with open(task_description_file.as_posix(), 'r') as f:
+                return f.read().strip()
         return self.repo.readme_description
 
     @property

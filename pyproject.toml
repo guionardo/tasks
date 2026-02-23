@@ -1,6 +1,6 @@
 [project]
 name = "tasks"
-version = "0.1.6"
+version = "0.1.7"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -16,8 +16,6 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 source-include = ["**/*.tcss", "**/*.py"]
-
-
 
 [tool.ruff.format]
 quote-style = "single"
