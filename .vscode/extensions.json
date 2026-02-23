@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "textual.textual",
+        "charliermarsh.ruff",
+        "ms-python.python",
+        "the0807.uv-toolkit"
+    ]
+}

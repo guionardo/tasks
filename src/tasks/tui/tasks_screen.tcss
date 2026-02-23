@@ -1,0 +1,22 @@
+VerticalScroll {
+    align: center middle;
+}
+
+Horizontal {
+    align: center middle;
+    height: auto;
+}
+
+RadioSet {
+    width: 45%;
+    padding: 1;
+    width: 1fr;
+}
+
+RadioSet#doing_tasks {
+    border: round $success;
+}
+
+RadioSet#done_tasks {
+    border: round $warning;
+}
