@@ -28,7 +28,7 @@ def new_task(
     logger.info('Task description: %s', task_description)
     task_dict = OrderedDict()
 
-    tasks_folder = config.doing_tasks_folder
+    tasks_folder = config.doing_tasks_directory
     task_number, task_version = parse_task_id(task_id)
 
     if existing_tasks := get_existing_tasks(config, task_number):
@@ -98,6 +98,47 @@ def new_task(
     return task, message
 
 
+def get_task_data_candidate(
+    config: Config, task_id: str, repository_name: str
+) -> tuple[str, str, str]:
+    """Get the last task data candidate for a given task id
+    Returns the new task id, last task description, last task oneliner, and repository name"""
+    task_number, task_version = parse_task_id(task_id)
+    new_task_folder = (
+        Path(config.doing_tasks_directory) / f'{task_id}-{repository_name}'
+    ).as_posix()
+    if not (existing_tasks := get_existing_tasks(config, task_number)):
+        return f'{task_number}-{task_version}', '', '', '', ''
+
+    last_task = existing_tasks[-1]
+    task_description, task_oneliner = '', ''
+
+    # Get the last task description and increment the task version
+    task_readme_file = Path(last_task.directory) / 'TASK' / f'{last_task.id}.md'
+    if task_readme_file.exists():
+        with open(task_readme_file, 'r') as f:
+            task_description = f.read()
+    task_oneliner_file = Path(last_task.directory) / 'TASK' / 'oneliner.txt'
+    if task_oneliner_file.exists():
+        with open(task_oneliner_file, 'r') as f:
+            task_oneliner = f.read()
+    task_version = str(int(task_version) + 1)
+
+    task_id = f'{task_number}-{task_version}'
+    new_task_folder = (
+        Path(config.doing_tasks_directory)
+        / f'{task_id}-{last_task.repo.repository_name}'
+    ).as_posix()
+
+    return (
+        task_id,
+        task_description,
+        task_oneliner,
+        last_task.repo.repository_name,
+        new_task_folder,
+    )
+
+
 def read_task_from_directory(directory: Path) -> Task | None:
     # Ex: tasks/in_progress/00001-0-repository_name
     logger = get_logger(__name__)
@@ -134,9 +175,16 @@ def read_task_from_directory(directory: Path) -> Task | None:
             task.oneliner = f.read().strip()
     else:
         os.makedirs(oneliner_file.parent, exist_ok=True)
-        task.oneliner = get_task_oneliner(task.description)
-        with open(oneliner_file.as_posix(), 'w') as f:
-            f.write(task.oneliner.strip())
+
+        task_file = directory / 'TASK' / f'{task_id}.md'
+        if task_file.exists():
+            with open(task_file.as_posix()) as f:
+                task_description = f.read().strip()
+            task.oneliner = get_task_oneliner(task_description)
+            with open(oneliner_file.as_posix(), 'w') as f:
+                f.write(task.oneliner.strip())
+        else:
+            task.oneliner = task.description
 
     return task
 
@@ -176,7 +224,7 @@ def get_existing_tasks(config: Config, task_number: str) -> list[Task]:
     tasks = []
     logger = get_logger(__name__)
     logger.info('Getting existing tasks for %s', task_number)
-    for task_folder in [config.doing_tasks_folder, config.done_tasks_folder]:
+    for task_folder in [config.doing_tasks_directory, config.done_tasks_directory]:
         for task_folder in task_folder.iterdir():
             if task_folder.is_dir():
                 task = read_task_from_directory(task_folder)
@@ -212,12 +260,12 @@ def open_task_in_editor(config: Config, task: Task) -> str | None:
 def move_task_to_done(config: Config, task: Task) -> str | None:
     if (
         task.status == TaskStatus.DONE
-        or task.directory.parent == config.done_tasks_folder
+        or task.directory.parent == config.done_tasks_directory
     ):
         return 'Task is already done'
 
     new_task_folder = (
-        config.done_tasks_folder / f'{task.id}-{task.repo.repository_name}'
+        config.done_tasks_directory / f'{task.id}-{task.repo.repository_name}'
     )
     new_task_folder.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -233,7 +281,7 @@ def move_task_to_doing(config: Config, task: Task) -> str | None:
     if task.status == TaskStatus.IN_PROGRESS:
         return 'Task is already in progress'
     new_task_folder = (
-        config.doing_tasks_folder / f'{task.id}-{task.repo.repository_name}'
+        config.doing_tasks_directory / f'{task.id}-{task.repo.repository_name}'
     )
     new_task_folder.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -264,10 +312,10 @@ def archive_task(config: Config, task: Task) -> str | None:
     if task.status != TaskStatus.DONE:
         raise ValueError('Task is not done')
     try:
-        os.makedirs(config.archive_tasks_folder, exist_ok=True)
+        os.makedirs(config.archive_tasks_directory, exist_ok=True)
         archive_file = Path(
             shutil.make_archive(
-                base_name=str(Path(config.archive_tasks_folder) / task.archive_name),
+                base_name=str(Path(config.archive_tasks_directory) / task.archive_name),
                 format='zip',
                 root_dir=str(task.directory),
                 verbose=True,
@@ -289,12 +337,16 @@ def archive_task(config: Config, task: Task) -> str | None:
 
 
 def get_task_oneliner(description: str) -> str:
+    logger = get_logger(__name__)
     if not description:
+        logger.warning('oneliner: no description')
         return ''
     if description.count('\n') == 0:
+        logger.warning('oneliner: using description as is')
         return description.strip()
     default_oneliner = ''.join(description.splitlines()[:1])
     if not shutil.which('agent'):  # Use cursor agent to generate the oneliner
+        logger.warning('oneliner: no agent found. using default oneliner')
         return default_oneliner
 
     with tempfile.TemporaryDirectory(dir='.') as tmp_dir:
@@ -316,6 +368,10 @@ def get_task_oneliner(description: str) -> str:
         )
 
         if result.returncode != 0:
+            logger.warning(
+                'oneliner: failed to get oneliner: %s',
+                result.stderr.decode('utf-8', errors='replace'),
+            )
             return default_oneliner
 
         json_result = json.loads(result.stdout)
@@ -324,9 +380,11 @@ def get_task_oneliner(description: str) -> str:
             and json_result['subtype'] == 'success'
             and not json_result['is_error']
         ):
+            logger.info('oneliner: got oneliner: %s', json_result['result'])
             return json_result['result']
 
-        return json_result['result']
+        logger.warning('oneliner: failed to get oneliner: %s', result.stdout)
+        return default_oneliner
 
     # args = ['agent', 'generate', description]
 

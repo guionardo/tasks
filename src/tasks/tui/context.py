@@ -17,12 +17,14 @@ class Context:
     def _get_tasks(self, status: TaskStatus, refresh: bool = False) -> list[Task]:
         tasks = self._task_cache.get(status, [])
         if refresh or not tasks:
-            tasks_folder = Path(self.config.tasks_folder) / status.value
-            if not tasks_folder.exists():
+            tasks_directory = Path(self.config.tasks_directory) / status.value
+            if not tasks_directory.exists():
                 return []
             tasks = [
                 t
-                for t in [read_task_from_directory(p) for p in tasks_folder.iterdir()]
+                for t in [
+                    read_task_from_directory(p) for p in tasks_directory.iterdir()
+                ]
                 if t is not None
             ]
             tasks.sort(key=lambda x: x.id)
@@ -64,7 +66,10 @@ _context: Context = None
 
 
 def setup_context(
-    config_path: str = Path.home(), tasks_folder: str = Path.home() / 'tasks'
+    config_path: str = Path.home() / '.config' / 'tasks',
+    tasks_directory: str = Path.home() / 'tasks',
+    log_level: str = 'INFO',
+    log_file: str = Path.home() / '.config' / 'tasks' / 'tasks.log',
 ):
     global _context
 
@@ -75,11 +80,14 @@ def setup_context(
     else:
         config = Config(config_path=config_path)
 
+    config.log_level = log_level
+    config.log_file = log_file
+
     _context = Context(config=config)
-    _context.config.tasks_folder = tasks_folder
+    _context.config.tasks_directory = tasks_directory
 
 
 def get_context() -> Context:
     if not _context:
-        setup_context()
+        raise RuntimeError('Context not setup')
     return _context

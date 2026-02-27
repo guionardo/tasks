@@ -24,7 +24,7 @@ class TestNewTask(TestCase):
         now = datetime.now()
         with tempfile.TemporaryDirectory() as tmp_dir:
             new_task_folder = Path(tmp_dir) / 'test_tasks'
-            config = Config(config_path=tmp_dir, tasks_folder=str(new_task_folder))
+            config = Config(config_path=tmp_dir, tasks_directory=str(new_task_folder))
             task_description = """# Description
             This is a test task description.
             """
@@ -40,6 +40,8 @@ class TestNewTask(TestCase):
 
             config.save()
 
-            new_config = Config(config_path=tmp_dir, tasks_folder=str(new_task_folder))
+            new_config = Config(
+                config_path=tmp_dir, tasks_directory=str(new_task_folder)
+            )
 
             print(new_config.to_dict())

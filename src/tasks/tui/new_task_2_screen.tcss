@@ -1,0 +1,24 @@
+#oneliner_description {
+    width: 1fr;
+    border: round $accent;
+}
+
+#description {
+    border: round $accent;
+}
+#generate {
+    border: round $success;
+}
+#repos {
+    border: round $primary;
+}
+
+#creation_horizontal > * {
+    width: 1fr;
+    border: round $success;
+}
+
+Horizontal.label_input > * {
+    width: 1fr;
+    border: round $accent;
+}

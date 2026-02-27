@@ -55,3 +55,7 @@ Horizontal {
 RadioSet {
     width: 45%;
 }
+
+Input {
+    border: round $accent;
+}

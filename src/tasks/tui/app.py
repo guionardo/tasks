@@ -3,6 +3,7 @@ from textual.widgets import Footer, Header
 
 from tasks import __version__
 from tasks.service.logging_service import get_logger, setup_logging
+from tasks.tui.context import get_context
 from tasks.tui.logs_screen import Logs
 from tasks.tui.settings_screen import Setup
 from tasks.tui.tasks_screen import Tasks
@@ -11,7 +12,7 @@ from tasks.tui.tasks_screen import Tasks
 class MainApp(App):
     CSS_PATH = 'main.tcss'
     TITLE = 'Task Manager'
-    SUB_TITLE = f'Manage your tasks - Version {__version__}'
+    SUB_TITLE = f'guiosoft - v{__version__}'
     SCREENS = {
         'setup': Setup,
         'tasks': Tasks,
@@ -20,13 +21,19 @@ class MainApp(App):
     BINDINGS = [
         ('q', 'exit', 'Quit the app'),
         ('s', "push_screen('setup')", 'Setup'),
-        ('t', "push_screen('tasks')", 'Tasks'),
         ('l', "push_screen('logs')", 'Logs'),
     ]
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        setup_logging()
+
+        config = get_context().config
+
+        setup_logging(
+            config_path=config.config_path,
+            log_level=config.log_level,
+            log_file=config.log_file,
+        )
         get_logger().info('App initialized')
 
     def compose(self) -> ComposeResult:

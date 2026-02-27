@@ -14,7 +14,7 @@ from tasks.service.task_service import (
 )
 from tasks.task.task import Task, TaskStatus
 from tasks.tui.context import ContextClass
-from tasks.tui.new_task_screen import NewTask
+from tasks.tui.new_task_2_screen import NewTask
 
 # ACTIONS
 NEW_TASK = 'new_task'
@@ -52,32 +52,30 @@ class Tasks(Screen, ContextClass):
     def compose(self) -> ComposeResult:
         yield Header()
         with Horizontal():
-            if doing_tasks := self.context.get_doing_tasks(refresh=self.refresh_tasks):
-                self.doing_tasks = doing_tasks
-                with Vertical():
-                    yield Label(' Doing Tasks')
-                    with RadioSet(id='doing_tasks'):
-                        for task in doing_tasks:
-                            yield RadioButton(
-                                label=task.short_name,
-                                id=f'doing_tasks_radio_{task.id}',
-                                tooltip=task_tooltip(task),
-                                compact=True,
-                                value=self.selected_task_id == task.id,
-                            )
+            self.doing_tasks = self.context.get_doing_tasks(refresh=self.refresh_tasks)
+            with Vertical():
+                yield Label(' Doing Tasks')
+                with RadioSet(id='doing_tasks'):
+                    for task in self.doing_tasks:
+                        yield RadioButton(
+                            label=task.short_name,
+                            id=f'doing_tasks_radio_{task.id}',
+                            tooltip=task_tooltip(task),
+                            compact=True,
+                            value=self.selected_task_id == task.id,
+                        )
 
-            if done_tasks := self.context.get_done_tasks():
-                self.done_tasks = done_tasks
-                with Vertical():
-                    yield Label(' Done Tasks')
-                    with RadioSet(id='done_tasks'):
-                        for task in done_tasks:
-                            yield RadioButton(
-                                label=task.short_name,
-                                id=f'done_tasks_radio_{task.id}',
-                                tooltip=task_tooltip(task),
-                                compact=True,
-                            )
+            self.done_tasks = self.context.get_done_tasks(refresh=self.refresh_tasks)
+            with Vertical():
+                yield Label(' Done Tasks')
+                with RadioSet(id='done_tasks'):
+                    for task in self.done_tasks:
+                        yield RadioButton(
+                            label=task.short_name,
+                            id=f'done_tasks_radio_{task.id}',
+                            tooltip=task_tooltip(task),
+                            compact=True,
+                        )
 
         yield Footer()
 
@@ -202,6 +200,7 @@ class Tasks(Screen, ContextClass):
             result = self.can_delete_done()
         elif action == ARCHIVE_TASK:
             result = self.can_archive_task()
+
         else:
             return True
 
@@ -224,6 +223,4 @@ class Tasks(Screen, ContextClass):
 
 
 def task_tooltip(task) -> str:
-    return (
-        f'{task.repo.project_name}\n{task.repo.repository_name}\n{task.short_directory}\n\n{task.oneliner}'
-    )
+    return f'[b]{task.repo.project_name} - {task.repo.repository_name}[/b]\n\n{task.short_directory}\n\n[i]{task.oneliner}[/i]'

@@ -1,3 +1,4 @@
+import logging
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -5,7 +6,7 @@ from typing import Any
 
 import yaml
 
-from tasks.consts import TaskStatus
+from tasks.consts import BASE_CONFIG_PATH, TaskStatus
 from tasks.git import GitConfig, find_repos
 
 CONFIG_FILE = '.tasks.yaml'
@@ -13,13 +14,15 @@ CONFIG_FILE = '.tasks.yaml'
 
 @dataclass
 class Config:
-    config_path: str = field(default=Path.home())
+    config_path: str = field(default=BASE_CONFIG_PATH)
     repos: list[GitConfig] = field(default_factory=list)
     unique_repos: dict[str, str] = field(default_factory=dict)
     base_repos_directory: str = field(default='')
     last_sync: int = field(default=0)
-    tasks_folder: str = field(default='')
+    tasks_directory: str = field(default='')
     editor: str = field(default='cursor')
+    log_level: str = field(default=logging.INFO)
+    log_file: str = field(default=(BASE_CONFIG_PATH / 'tasks.log').as_posix())
 
     def __post_init__(self):
         config_file = Path(self.config_path) / CONFIG_FILE
@@ -29,7 +32,7 @@ class Config:
         if config_file.exists():
             self = Config.load(config_file)
 
-        if self.tasks_folder and int(time.time()) - self.last_sync > 60 * 60:
+        if self.tasks_directory and int(time.time()) - self.last_sync > 60 * 60:
             self._find_repos()
 
         else:
@@ -46,7 +49,7 @@ class Config:
         """Read all repos from base_repos_directory and updates the unique_repos dictionary"""
         self.repos.clear()
         self.unique_repos.clear()
-        for repo_folder in [self.tasks_folder, self.base_repos_directory]:
+        for repo_folder in [self.tasks_directory, self.base_repos_directory]:
             for git_config in find_repos(repo_folder):
                 self.repos.append(git_config)
                 self.unique_repos[git_config.repository_name] = git_config.remote_url
@@ -85,20 +88,20 @@ class Config:
                     self.base_repos_directory = repo.directory
 
     @property
-    def doing_tasks_folder(self) -> Path:
-        p = Path(self.tasks_folder) / TaskStatus.IN_PROGRESS.value
+    def doing_tasks_directory(self) -> Path:
+        p = Path(self.tasks_directory) / TaskStatus.IN_PROGRESS.value
         p.mkdir(parents=True, exist_ok=True)
         return p
 
     @property
-    def done_tasks_folder(self) -> Path:
-        p = Path(self.tasks_folder) / TaskStatus.DONE.value
+    def done_tasks_directory(self) -> Path:
+        p = Path(self.tasks_directory) / TaskStatus.DONE.value
         p.mkdir(parents=True, exist_ok=True)
         return p
 
     @property
-    def archive_tasks_folder(self) -> Path:
-        p = Path(self.tasks_folder) / TaskStatus.ARCHIVE.value
+    def archive_tasks_directory(self) -> Path:
+        p = Path(self.tasks_directory) / TaskStatus.ARCHIVE.value
         p.mkdir(parents=True, exist_ok=True)
         return p
 
@@ -156,7 +159,7 @@ def _marshal_config(config: Config) -> dict[str, Any]:
         },
         'base_repos_directory': str(config.base_repos_directory),
         'last_sync': int(config.last_sync),
-        'tasks_folder': str(config.tasks_folder),
+        'tasks_folder': str(config.tasks_directory),
     }
 
 
@@ -195,7 +198,7 @@ def load_config_from_file(config_file: str | Path) -> Config:
 
     config.base_repos_directory = str(data.get('base_repos_directory', ''))
     config.last_sync = int(data.get('last_sync', 0))
-    config.tasks_folder = str(data.get('tasks_folder', ''))
+    config.tasks_directory = str(data.get('tasks_folder', ''))
 
     if not config.unique_repos:
         config.unique_repos = {

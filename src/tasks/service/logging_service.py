@@ -1,8 +1,10 @@
 import io
 import logging
 from datetime import datetime
-from logging.handlers import RotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
+
+from tasks.consts import BASE_CONFIG_PATH
 
 _log_bytes_buffer = io.BytesIO()
 _log_text_stream = io.TextIOWrapper(_log_bytes_buffer, encoding='utf-8')
@@ -10,19 +12,24 @@ _log_text_stream = io.TextIOWrapper(_log_bytes_buffer, encoding='utf-8')
 
 def setup_logging(
     format: str = '%(asctime)s %(name)-10s [%(levelname)-8s] %(message)s',
+    config_path: Path = BASE_CONFIG_PATH,
+    log_level: str = logging.INFO,
+    log_file: str = (BASE_CONFIG_PATH / 'tasks.log').as_posix(),
 ) -> None:
     _log_bytes_buffer.seek(0)
     _log_bytes_buffer.truncate(0)
 
     handler = logging.StreamHandler(_log_text_stream)
     handler.setFormatter(logging.Formatter(format, datefmt='%H:%M:%S'))
+    log_file = (Path(config_path) / 'tasks.log').as_posix()
 
-    file_handler = RotatingFileHandler(
-        'app.log', maxBytes=1024 * 1024 * 5, backupCount=5
+    file_handler = TimedRotatingFileHandler(
+        log_file, when='M', interval=2, backupCount=10
     )
+
     file_handler.setFormatter(logging.Formatter(format, datefmt='%H:%M:%S'))
     logging.basicConfig(
-        level=logging.INFO,
+        level=log_level,
         handlers=[handler, file_handler],
         force=True,
     )
