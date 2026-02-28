@@ -52,10 +52,12 @@ Horizontal {
     height: auto;
 }
 
-RadioSet {
-    width: 45%;
-}
-
 Input {
     border: round $accent;
+}
+
+# 
+Tooltip {
+    width: auto;
+    max-width: 80%;
 }

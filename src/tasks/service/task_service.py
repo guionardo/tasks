@@ -142,15 +142,14 @@ def get_task_data_candidate(
 def read_task_from_directory(directory: Path) -> Task | None:
     # Ex: tasks/in_progress/00001-0-repository_name
     logger = get_logger(__name__)
-    logger.info('Reading task from directory: %s', directory)
+    logger.info('Reading task: %s', directory)
     task_number, task_version = parse_task_id(directory.stem)
     task_id = f'{task_number}-{task_version}'
 
     repo = GitConfig(directory=str(directory))
     if not repo.is_git_directory:
-        logger.warning('Not a git directory: %s', directory)
         return None
-    logger.info('Git: %s', repo)
+
     if TaskStatus.DONE.value in str(directory):
         status = TaskStatus.DONE
     elif TaskStatus.IN_PROGRESS.value in str(directory):
@@ -185,7 +184,7 @@ def read_task_from_directory(directory: Path) -> Task | None:
                 f.write(task.oneliner.strip())
         else:
             task.oneliner = task.description
-
+    logger.info('Task: %s', task)
     return task
 
 
@@ -352,7 +351,9 @@ def get_task_oneliner(description: str) -> str:
     with tempfile.TemporaryDirectory(dir='.') as tmp_dir:
         task_file = Path(tmp_dir) / 'task.md'
         task_file.write_text(description)
-        prompt = f'create just a one line description from the content of @{task_file.as_posix()}. Output only the one line description, no other text.'
+        prompt = (f'create just a one line description from the content of @{task_file.as_posix()}. '
+        'Output only the one line description, no other text. '
+        'Use the same language as the description.')
 
         result = subprocess.run(
             args=[

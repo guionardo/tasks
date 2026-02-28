@@ -1,8 +1,8 @@
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal
 from textual.reactive import reactive
 from textual.screen import Screen
-from textual.widgets import Footer, Header, Label, RadioButton, RadioSet
+from textual.widgets import Footer, Header, RadioButton, RadioSet
 
 from tasks.service.logging_service import get_logger
 from tasks.service.task_service import (
@@ -14,7 +14,7 @@ from tasks.service.task_service import (
 )
 from tasks.task.task import Task, TaskStatus
 from tasks.tui.context import ContextClass
-from tasks.tui.new_task_2_screen import NewTask
+from tasks.tui.new_task_screen import NewTask
 
 # ACTIONS
 NEW_TASK = 'new_task'
@@ -53,29 +53,16 @@ class Tasks(Screen, ContextClass):
         yield Header()
         with Horizontal():
             self.doing_tasks = self.context.get_doing_tasks(refresh=self.refresh_tasks)
-            with Vertical():
-                yield Label(' Doing Tasks')
-                with RadioSet(id='doing_tasks'):
-                    for task in self.doing_tasks:
-                        yield RadioButton(
-                            label=task.short_name,
-                            id=f'doing_tasks_radio_{task.id}',
-                            tooltip=task_tooltip(task),
-                            compact=True,
-                            value=self.selected_task_id == task.id,
-                        )
+            tasks = (RadioButton(label=task.short_name, id=f'doing_tasks_radio_{task.id}', tooltip=task_tooltip(task), compact=True, value=self.selected_task_id == task.id) for task in self.doing_tasks)
+            radio_set = RadioSet(*tasks,id='doing_tasks')
+            radio_set.border_title = 'Doing Tasks'
+            yield radio_set
 
             self.done_tasks = self.context.get_done_tasks(refresh=self.refresh_tasks)
-            with Vertical():
-                yield Label(' Done Tasks')
-                with RadioSet(id='done_tasks'):
-                    for task in self.done_tasks:
-                        yield RadioButton(
-                            label=task.short_name,
-                            id=f'done_tasks_radio_{task.id}',
-                            tooltip=task_tooltip(task),
-                            compact=True,
-                        )
+            tasks = (RadioButton(label=task.short_name, id=f'done_tasks_radio_{task.id}', tooltip=task_tooltip(task), compact=True, value=self.selected_task_id == task.id) for task in self.done_tasks)
+            radio_set = RadioSet(*tasks,id='done_tasks')
+            radio_set.border_title = 'Done Tasks'
+            yield radio_set
 
         yield Footer()
 

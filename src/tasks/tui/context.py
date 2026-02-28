@@ -23,7 +23,9 @@ class Context:
             tasks = [
                 t
                 for t in [
-                    read_task_from_directory(p) for p in tasks_directory.iterdir()
+                    read_task_from_directory(p)
+                    for p in tasks_directory.iterdir()
+                    if p.is_dir()
                 ]
                 if t is not None
             ]

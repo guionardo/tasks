@@ -1,15 +1,11 @@
-VerticalScroll {
-    align: center middle;
-}
-
 Horizontal {
     align: center middle;
     height: auto;
 }
 
 RadioSet {
-    width: 45%;
     padding: 1;
+    height: 1fr;
     width: 1fr;
 }
 
@@ -21,7 +17,3 @@ RadioSet#done_tasks {
     border: round $warning;
 }
 
-Tooltip {
-    width: auto;
-    max-width: 80%;
-}

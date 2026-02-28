@@ -8,6 +8,7 @@ from tasks.consts import BASE_CONFIG_PATH
 
 _log_bytes_buffer = io.BytesIO()
 _log_text_stream = io.TextIOWrapper(_log_bytes_buffer, encoding='utf-8')
+_log_file: Path = None
 
 
 def setup_logging(
@@ -16,6 +17,8 @@ def setup_logging(
     log_level: str = logging.INFO,
     log_file: str = (BASE_CONFIG_PATH / 'tasks.log').as_posix(),
 ) -> None:
+    global _log_file
+    _log_file = log_file
     _log_bytes_buffer.seek(0)
     _log_bytes_buffer.truncate(0)
 
@@ -37,11 +40,15 @@ def setup_logging(
 
 def get_log_bytes() -> bytes:
     _log_text_stream.flush()
-    return _log_bytes_buffer.getvalue()
+    lines = _log_bytes_buffer.getvalue()
+    _log_bytes_buffer.seek(0)
+    _log_bytes_buffer.truncate(0)
+
+    return lines
 
 
 def get_logger(log_name: str = __name__) -> logging.Logger:
-    return logging.getLogger(log_name.split('.')[-1])
+    return logging.getLogger(log_name.split('.')[-1].removesuffix('_service'))
 
 
 def save_log_to_file(log_file: Path = None) -> Path:

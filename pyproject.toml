@@ -20,5 +20,10 @@ source-include = ["**/*.tcss", "**/*.py"]
 [tool.ruff.format]
 quote-style = "single"
 
+[dependency-groups]
+dev = [
+    "textual-dev>=1.8.0",
+]
+
 [project.scripts]
 tasks = "tasks.__main__:main"

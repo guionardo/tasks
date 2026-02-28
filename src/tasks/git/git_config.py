@@ -2,6 +2,8 @@ import os
 from dataclasses import dataclass, field
 from typing import Generator
 
+from tasks.service.logging_service import get_logger
+
 
 @dataclass
 class GitConfig:
@@ -14,8 +16,10 @@ class GitConfig:
     readme_description: str = field(default='', init=False)
 
     def __post_init__(self):
+        logger = get_logger(__name__)
         self.directory = os.path.abspath(self.directory)
         if not os.path.exists(os.path.join(self.directory, '.git', 'config')):
+            logger.warning('Not a git directory: %s', self.directory)
             return
 
         remote_name, remote_url = '', ''
@@ -28,10 +32,22 @@ class GitConfig:
                 break
 
         if not (remote_name and remote_url):
+            logger.warning(
+                'Misconfigured git directory: %s - remote_name: %s, remote_url: %s',
+                self.directory,
+                remote_name,
+                remote_url,
+            )
             return
 
         project_name, repository_name = self.get_repo_names(remote_url)
         if not (project_name and repository_name):
+            logger.warning(
+                'Misconfigured git directory: %s - project_name: %s, repository_name: %s',
+                self.directory,
+                project_name,
+                repository_name,
+            )
             return
 
         self.remote_name = remote_name
@@ -40,6 +56,7 @@ class GitConfig:
         self.project_name = project_name
         self.repository_name = repository_name
         self.readme_description = self.get_readme_description(self.directory)
+        logger.info('%s', self)
 
     @staticmethod
     def get_repo_names(remote_url: str) -> tuple[str, str]:

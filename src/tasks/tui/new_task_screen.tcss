@@ -1,32 +1,65 @@
-Screen {
+TabbedContent {
+    height: auto;
+    border: round $secondary;
+}
+
+TabPane {
+    width: 1fr;
+    height: 1fr;
     align: center middle;
 }
 
-Horizontal {
-    width: 80%;
-    height: 100%;
+TextArea {
+    height: 1fr;
+    border: round $accent;
+    padding: 1;
 }
 
-VerticalScroll {
-    max-height: 50%;
+#oneliner_description_horizontal {
+    height: auto;
+    width: auto;
 }
+
+
+#generate_oneliner{ 
+    border: round $primary;
+}
+
+
 
 SelectionList {
-    padding: 1;
-    border: round $accent;
+    border: round $primary;
     width: 1fr;
 }
 
 RadioSet {
-    width: 45%;
-    padding: 1;
     width: 1fr;
+    height: 1fr;
+    border: round $primary;
+    padding: 0;
+}
+
+Markdown {
+    width: 1fr;
+    height: 1fr;
     border: round $accent;
 }
 
-TabPane {
-    width: 90%;
+Horizontal#creation_horizontal {
+    height: 1fr;
 }
+
+#creation_tab {
+    content-align-horizontal: center;
+}
+
+#creation_tab > Button {
+    content-align-horizontal: center;
+    content-align-vertical: bottom;
+    width: 100%;
+    height: auto;
+}
+
 
 #ui > * {
     width: 1fr;

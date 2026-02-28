@@ -1,5 +1,0 @@
-Log {
-    padding: 1;
-    border: solid $accent;
-    width: 1fr;  
-}

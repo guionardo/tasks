@@ -34,7 +34,12 @@ class MainApp(App):
             log_level=config.log_level,
             log_file=config.log_file,
         )
-        get_logger().info('App initialized')
+        get_logger(__name__).info(
+            'App initialized - config_path: %s, log_level: %s, log_file: %s',
+            config.config_path,
+            config.log_level,
+            config.log_file,
+        )
 
     def compose(self) -> ComposeResult:
         yield Header()
