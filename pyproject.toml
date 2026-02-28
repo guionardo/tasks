@@ -1,7 +1,8 @@
 [project]
 name = "tasks"
-version = "0.1.7"
-description = "Add your description here"
+version = "0.1.8"
+description = "Textual TUI for Git-based task workspaces with create, move, and archive workflows."
+authors = [{ name = "Guionardo Furlan", email = "guionardo@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -27,3 +28,8 @@ dev = [
 
 [project.scripts]
 tasks = "tasks.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/guionardo/tasks"
+Issues = "https://github.com/guionardo/tasks/issues"
+Repository = "https://github.com/guionardo/tasks"
