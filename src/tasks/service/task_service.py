@@ -351,9 +351,11 @@ def get_task_oneliner(description: str) -> str:
     with tempfile.TemporaryDirectory(dir='.') as tmp_dir:
         task_file = Path(tmp_dir) / 'task.md'
         task_file.write_text(description)
-        prompt = (f'create just a one line description from the content of @{task_file.as_posix()}. '
-        'Output only the one line description, no other text. '
-        'Use the same language as the description.')
+        prompt = (
+            f'create just a one line description from the content of @{task_file.as_posix()}. '
+            'Output only the one line description, no other text. '
+            'Use the same language as the description.'
+        )
 
         result = subprocess.run(
             args=[

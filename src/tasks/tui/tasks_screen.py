@@ -53,14 +53,32 @@ class Tasks(Screen, ContextClass):
         yield Header()
         with Horizontal():
             self.doing_tasks = self.context.get_doing_tasks(refresh=self.refresh_tasks)
-            tasks = (RadioButton(label=task.short_name, id=f'doing_tasks_radio_{task.id}', tooltip=task_tooltip(task), compact=True, value=self.selected_task_id == task.id) for task in self.doing_tasks)
-            radio_set = RadioSet(*tasks,id='doing_tasks')
+            tasks = (
+                RadioButton(
+                    label=task.short_name,
+                    id=f'doing_tasks_radio_{task.id}',
+                    tooltip=task_tooltip(task),
+                    compact=True,
+                    value=self.selected_task_id == task.id,
+                )
+                for task in self.doing_tasks
+            )
+            radio_set = RadioSet(*tasks, id='doing_tasks')
             radio_set.border_title = 'Doing Tasks'
             yield radio_set
 
             self.done_tasks = self.context.get_done_tasks(refresh=self.refresh_tasks)
-            tasks = (RadioButton(label=task.short_name, id=f'done_tasks_radio_{task.id}', tooltip=task_tooltip(task), compact=True, value=self.selected_task_id == task.id) for task in self.done_tasks)
-            radio_set = RadioSet(*tasks,id='done_tasks')
+            tasks = (
+                RadioButton(
+                    label=task.short_name,
+                    id=f'done_tasks_radio_{task.id}',
+                    tooltip=task_tooltip(task),
+                    compact=True,
+                    value=self.selected_task_id == task.id,
+                )
+                for task in self.done_tasks
+            )
+            radio_set = RadioSet(*tasks, id='done_tasks')
             radio_set.border_title = 'Done Tasks'
             yield radio_set
 

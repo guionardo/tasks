@@ -10,7 +10,6 @@ from textual.widgets import (
     Footer,
     Header,
     Input,
-    Label,
     Markdown,
     RadioButton,
     RadioSet,
@@ -34,7 +33,7 @@ class NewTask(Screen, ContextClass):
     BINDINGS = [
         ('escape', 'cancel', 'Cancel'),
         ('ctrl+t', 'tab_task_details', 'Task details'),
-        ('ctrl+.','next_tab', 'Next tab'),
+        ('ctrl+.', 'next_tab', 'Next tab'),
         ('ctrl+g', 'generate_oneliner', 'Generate oneliner'),
     ]
     _is_composed: var[bool] = var(False)
@@ -62,12 +61,11 @@ class NewTask(Screen, ContextClass):
         if not description:
             self.app.notify('Description is required', severity='error')
             return
-        
+
         input.loading = True
         self.oneliner_description = get_task_oneliner(description)
         input.value = self.oneliner_description
         input.loading = False
-        
 
     def compose(self) -> ComposeResult:
         self.repos = self.context.get_all_repos()
@@ -85,20 +83,33 @@ class NewTask(Screen, ContextClass):
                 description.border_title = 'Description'
                 yield description
 
-               
                 oneliner_input = Input(
                     placeholder='Oneliner description', id='oneliner_description'
                 )
-                oneliner_input.border_title='Use Ctrl+G to generate the oneliner from the description'
-                
+                oneliner_input.border_title = (
+                    'Use Ctrl+G to generate the oneliner from the description'
+                )
+
                 yield oneliner_input
 
             with TabPane('Repository', id='repository'):
-                repository_input=Input(placeholder='Repository', id='repository_input', value=self.chosen_repository.remote_url if self.chosen_repository else '')
+                repository_input = Input(
+                    placeholder='Repository',
+                    id='repository_input',
+                    value=self.chosen_repository.remote_url
+                    if self.chosen_repository
+                    else '',
+                )
                 repository_input.border_title = 'Repository remote URL'
                 yield repository_input
 
-                repositories = (RadioButton(label=f'{repo.project_name}/{repo.repository_name}', id=repo.repository_name) for repo in self.repos)
+                repositories = (
+                    RadioButton(
+                        label=f'{repo.project_name}/{repo.repository_name}',
+                        id=repo.repository_name,
+                    )
+                    for repo in self.repos
+                )
                 radio_set = RadioSet(*repositories, id='repos', name='Repositories')
                 radio_set.border_title = 'Repositories'
                 yield radio_set
@@ -111,7 +122,6 @@ class NewTask(Screen, ContextClass):
                     task_markdown = Markdown(id='task_markdown')
                     task_markdown.border_title = 'Task markdown'
                     yield task_markdown
-                    
 
                 yield Button('Create', variant='primary', id='create')
 
@@ -179,7 +189,7 @@ class NewTask(Screen, ContextClass):
                     await self.input_submitted(event)
             case 'repository':
                 for repo in self.repos:
-                    if repo.remote_url==event.input.value:
+                    if repo.remote_url == event.input.value:
                         self.chosen_repository = repo
                         break
 
@@ -229,18 +239,14 @@ class NewTask(Screen, ContextClass):
                         '#oneliner_description'
                     ).value = self.oneliner_description
 
-
-
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
         self.chosen_repository = self.repos[event.radio_set.pressed_index]
         input: Input = self.query_one('#repository_input')
-        input.value=self.chosen_repository.remote_url
-       
+        input.value = self.chosen_repository.remote_url
 
     @on(Button.Pressed)
     async def generate_oneliner(self, event: Button.Pressed) -> None:
         match event.button.id:
-
             case 'create':
                 error_message, focus_function = self.new_task_validation()
                 if error_message:
