@@ -1,61 +1,61 @@
 # Tasks TUI Manager
 
-Aplicação de terminal (TUI) para organizar tarefas de desenvolvimento baseadas em repositórios Git.
+Terminal application (TUI) to organize development tasks based on Git repositories.
 
-Com ela você pode:
+With it, you can:
 
-- criar uma task a partir de um repositório remoto;
-- trabalhar com status (`in_progress`, `done`, `archive`);
-- abrir a task no editor configurado;
-- arquivar tasks concluídas em `.zip`;
-- visualizar e exportar logs da sessão.
+- create a task from a remote repository;
+- work with statuses (`in_progress`, `done`, `archive`);
+- open the task in the configured editor;
+- archive completed tasks as `.zip`;
+- view and export session logs.
 
-## Requisitos
+## Requirements
 
 - Python `>=3.12`
-- `uv` (recomendado para execução)
-- Git disponível no `PATH`
-- acesso ao repositório remoto usado nas tasks (SSH/HTTPS)
-- CLI `agent` do Cursor no `PATH` (opcional, recomendada para gerar oneliner com `Ctrl+G`)
+- `uv` (recommended for execution)
+- Git available in `PATH`
+- access to the remote repository used in tasks (SSH/HTTPS)
+- Cursor `agent` CLI available in `PATH` (optional, recommended for generating oneliner with `Ctrl+G`)
 
-## Instalação
+## Installation
 
 ```bash
 uv sync
 ```
 
-## Executar
+## Run
 
 ```bash
 uv run tasks
 ```
 
-Alternativa:
+Alternative:
 
 ```bash
 uv run python -m tasks
 ```
 
-## Opções da CLI
+## CLI Options
 
 ```bash
 uv run tasks --help
 ```
 
-Argumentos principais:
+Main arguments:
 
-- `--config-path`: diretório onde o `.tasks.yaml` será salvo;
-- `--tasks-folder`: diretório raiz das tasks;
-- `--log-level`: nível de log (ex.: `INFO`, `DEBUG`);
-- `--log-file`: caminho do arquivo de log.
+- `--config-path`: directory where `.tasks.yaml` will be saved;
+- `--tasks-folder`: root directory for tasks;
+- `--log-level`: log level (e.g. `INFO`, `DEBUG`);
+- `--log-file`: log file path.
 
-Exemplo:
+Example:
 
 ```bash
 uv run tasks --config-path ~/.config/tasks --tasks-folder ~/tasks
 ```
 
-## Estrutura das Pastas
+## Folder Structure
 
 ```text
 <tasks_folder>/
@@ -71,62 +71,62 @@ uv run tasks --config-path ~/.config/tasks --tasks-folder ~/tasks
     123-0-project-repository-a.zip
 ```
 
-## Atalhos da Interface
+## Interface Shortcuts
 
-Atalhos globais:
+Global shortcuts:
 
-- `esc`: sair da aplicação
-- `s`: abrir tela de setup
-- `l`: abrir tela de logs
+- `esc`: exit the application
+- `s`: open setup screen
+- `l`: open logs screen
 
-Na tela de tasks:
+On the tasks screen:
 
-- `n`: nova task
-- `e`: abrir task no editor
-- `>`: mover para `done`
-- `<`: mover para `in_progress`
-- `x`: deletar task `done`
-- `r`: atualizar lista de tasks
-- `a`: arquivar task `done`
+- `n`: new task
+- `e`: open task in editor
+- `>`: move to `done`
+- `<`: move to `in_progress`
+- `x`: delete `done` task
+- `r`: refresh task list
+- `a`: archive `done` task
 
-## Fluxo de Uso
+## Usage Flow
 
-1. Crie uma task informando ID, repositório e descrição.
-2. A ferramenta clona o repositório em `in_progress/<task-id>-<repository-name>`.
-3. A pasta `TASK/` com arquivo markdown da task é criada automaticamente.
-4. Ao concluir, mova para `done` e, se quiser, arquive para `archive`.
+1. Create a task by providing ID, repository, and description.
+2. The tool clones the repository into `in_progress/<task-id>-<repository-name>`.
+3. The `TASK/` folder with the task markdown file is created automatically.
+4. When finished, move it to `done` and optionally archive it to `archive`.
 
 ## Logs
 
-- Logs ficam disponíveis na tela `Logs`.
-- O arquivo principal fica em `<config-path>/tasks.log`.
+- Logs are available in the `Logs` screen.
+- The main log file is stored at `<config-path>/tasks.log`.
 
-## Setup da CLI `agent` (Cursor)
+## Cursor `agent` CLI Setup
 
-A funcionalidade de gerar oneliner (`Ctrl+G` na tela de nova task) usa a CLI `agent`.
+The oneliner generation feature (`Ctrl+G` on the new task screen) uses the `agent` CLI.
 
-### 1) Instalar e autenticar
+### 1) Install and authenticate
 
-- Instale o Cursor no ambiente onde a TUI roda.
-- Garanta que a CLI `agent` esteja disponível no `PATH`.
-- Faça login no Cursor/CLI conforme seu ambiente.
+- Install Cursor in the environment where the TUI runs.
+- Ensure the `agent` CLI is available in `PATH`.
+- Sign in to Cursor/CLI according to your environment.
 
-### 2) Validar instalação
+### 2) Validate installation
 
 ```bash
 agent --help
 ```
 
-Se o comando responder ajuda/uso, a CLI está disponível.
+If the command shows help/usage output, the CLI is available.
 
-### 3) Comportamento quando `agent` não está disponível
+### 3) Behavior when `agent` is not available
 
-Se a CLI `agent` não estiver configurada, a TUI continua funcionando e usa fallback:
+If the `agent` CLI is not configured, the TUI still works and uses a fallback:
 
-- o oneliner vira a primeira linha da descrição da task.
+- the oneliner becomes the first line of the task description.
 
-Ou seja, a geração automática melhora a qualidade do resumo, mas não bloqueia o fluxo de criação.
+So automatic generation improves summary quality, but it does not block task creation.
 
-## Documentação Técnica
+## Technical Documentation
 
-Detalhes de arquitetura, testes, estrutura interna e manutenção estão em `DEVELOPMENT.md`.
+Architecture, tests, internal structure, and maintenance details are available in `DEVELOPMENT.md`.

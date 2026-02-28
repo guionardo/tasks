@@ -2,20 +2,20 @@
 
 ## 1. Purpose
 
-Este documento define uma especificação operacional para agentes de IA que irão analisar, manter ou evoluir o projeto **Tasks TUI Manager**.
+This document defines an operational specification for AI agents that will analyze, maintain, or evolve the **Tasks TUI Manager** project.
 
-Objetivo principal da IA:
+Main AI objective:
 
-- manter o comportamento funcional atual;
-- implementar mudanças de forma incremental e segura;
-- preservar simplicidade da arquitetura;
-- priorizar confiabilidade em operações de filesystem e Git.
+- maintain current functional behavior;
+- implement changes incrementally and safely;
+- preserve architectural simplicity;
+- prioritize reliability in filesystem and Git operations.
 
 ## 2. Product Context
 
-O sistema é uma aplicação **TUI** (terminal user interface), construída com **Textual**, para gerenciamento de tarefas de desenvolvimento baseadas em repositórios Git.
+The system is a **TUI** (terminal user interface), built with **Textual**, for managing development tasks based on Git repositories.
 
-Cada task representa um workspace local de trabalho clonado de um remoto Git e organizado por status:
+Each task represents a local workspace cloned from a Git remote and organized by status:
 
 - `in_progress`
 - `done`
@@ -25,49 +25,49 @@ Cada task representa um workspace local de trabalho clonado de um remoto Git e o
 
 ### 3.1 Run Application
 
-1. Usuário executa `tasks` ou `python -m tasks`.
-2. Sistema processa argumentos CLI (`--config-path`, `--tasks-folder`).
-3. Contexto global é inicializado.
-4. `MainApp` sobe e abre a tela de tasks.
+1. User runs `tasks` or `python -m tasks`.
+2. System processes CLI arguments (`--config-path`, `--tasks-folder`, `--log-level`, `--log-file`).
+3. Global context is initialized.
+4. `MainApp` starts and opens the tasks screen.
 
 ### 3.2 Create New Task
 
-1. Usuário abre tela de criação (`n`).
-2. Informa task id, repositório e descrição.
-3. Sistema calcula versão de task (auto incremento quando necessário).
-4. Executa `git clone`.
-5. Cria pasta `TASK/` e arquivo `<task-id>.md`.
-6. Atualiza configuração persistida (`.tasks.yaml`).
+1. User opens the creation screen (`n`).
+2. Provides task id, repository, and description.
+3. System computes task version (auto-increment when needed).
+4. Executes `git clone`.
+5. Creates `TASK/` folder and `<task-id>.md` file.
+6. Updates persisted configuration (`.tasks.yaml`).
 
 ### 3.3 Task Status Transition
 
-- `in_progress -> done` (atalho `>`)
-- `done -> in_progress` (atalho `<`)
-- `done -> deleted` (atalho `x`)
-- `done -> archive zip` (atalho `a`)
+- `in_progress -> done` (shortcut `>`)
+- `done -> in_progress` (shortcut `<`)
+- `done -> deleted` (shortcut `x`)
+- `done -> archive zip` (shortcut `a`)
 
 ### 3.4 Open in Editor
 
-1. Usuário seleciona task.
-2. Sistema chama editor configurado (`config.editor`, default `cursor`).
-3. Para `cursor`/`code`, abre o arquivo `TASK/<task-id>.md` com `-g` quando existir.
+1. User selects a task.
+2. System calls configured editor (`config.editor`, default `cursor`).
+3. For `cursor`/`code`, opens `TASK/<task-id>.md` with `-g` when available.
 
 ## 4. Functional Scope
 
 ### 4.1 Included
 
-- execução TUI;
-- leitura/escrita de configuração em YAML;
-- descoberta de repositórios em diretórios;
-- operações de task (create, move, delete, archive);
-- logging em buffer de memória e arquivo rotativo.
+- TUI execution;
+- YAML configuration read/write;
+- repository discovery in directories;
+- task operations (create, move, delete, archive);
+- logging in memory buffer and rotating file.
 
 ### 4.2 Excluded (Current Scope)
 
-- autenticação Git avançada;
+- advanced Git authentication;
 - multi-tenant profile/config;
-- sincronização distribuída ou remota de estado de tasks;
-- API HTTP.
+- distributed or remote synchronization of task state;
+- HTTP API.
 
 ## 5. Technical Architecture
 
@@ -75,31 +75,30 @@ Cada task representa um workspace local de trabalho clonado de um remoto Git e o
 
 - `tasks.__main__`: entrypoint.
 - `tasks.tui.*`: UI/screens.
-- `tasks.tui.context`: contexto global e carregamento de config/tasks.
-- `tasks.config.config`: modelo e persistência de configuração.
-- `tasks.service.task_service`: regras de negócio de tasks.
+- `tasks.tui.context`: global context and config/tasks loading.
+- `tasks.config.config`: configuration model and persistence.
+- `tasks.service.task_service`: task business rules.
 - `tasks.service.logging_service`: setup/log buffer/export.
-- `tasks.git.git_config`: leitura de `.git/config` e descoberta de repos.
-- `tasks.task.task`: entidade `Task` e parser de id.
+- `tasks.git.git_config`: `.git/config` reading and repo discovery.
+- `tasks.task.task`: `Task` entity and id parser.
 
 ### 5.2 State and Persistence
 
-- Configuração persistida em `<config-path>/.tasks.yaml`.
-- Tasks persistidas em estrutura de diretórios sob `tasks_folder`.
-- Logs persistidos em:
-  - memória (para tela de logs),
-  - `app.log` com rotação,
-  - export manual timestampado.
+- Configuration persisted in `<config-path>/.tasks.yaml`.
+- Tasks persisted in directory structure under `tasks_folder`.
+- Logs persisted in:
+  - memory (for logs screen),
+  - `<config-path>/tasks.log` with time-based rotation.
 
 ## 6. Data Contracts
 
 ### 6.1 Task Identity
 
-- Formato esperado: `<number>-<version>`.
-- Quando versão não for informada, assumir `0`.
-- Exemplo:
-  - entrada: `123`
-  - normalizado: `123-0`
+- Expected format: `<number>-<version>`.
+- When version is not provided, assume `0`.
+- Example:
+  - input: `123`
+  - normalized: `123-0`
 
 ### 6.2 Task Folder Naming
 
@@ -109,7 +108,7 @@ Cada task representa um workspace local de trabalho clonado de um remoto Git e o
 
 ### 6.3 Config File (`.tasks.yaml`)
 
-Campos mínimos:
+Minimum fields:
 
 - `config_path`
 - `repos`
@@ -122,100 +121,104 @@ Campos mínimos:
 
 ### 7.1 Reliability
 
-- nunca assumir que diretórios existem sem validar;
-- tratar explicitamente erros de subprocess e filesystem;
-- evitar perda de dados em transições de status.
+- never assume directories exist without validation;
+- explicitly handle subprocess and filesystem errors;
+- avoid data loss in status transitions.
 
 ### 7.2 Simplicity
 
-- preferir mudanças pequenas e locais;
-- evitar introdução de camadas extras sem necessidade;
-- manter API dos serviços simples e explícita.
+- prefer small, local changes;
+- avoid introducing extra layers unnecessarily;
+- keep service APIs simple and explicit.
 
 ### 7.3 Compatibility
 
-- preservar comportamento de atalhos e telas da TUI;
-- preservar layout de diretórios de tasks;
-- preservar formato do `.tasks.yaml`, salvo mudanças planejadas.
+- preserve current TUI shortcut and screen behavior;
+- preserve task directory layout;
+- preserve `.tasks.yaml` format unless changes are planned.
 
 ### 7.4 Observability
 
-- manter logging claro para fluxos críticos:
+- keep logging clear for critical flows:
   - clone;
-  - movimentação de task;
-  - arquivamento;
-  - falhas de IO/subprocess.
+  - task movement;
+  - archiving;
+  - IO/subprocess failures.
 
 ## 8. Current Known Gaps (Baseline)
 
-- `src/tasks/service/config_service.py` está vazio.
-- alguns testes usam imports antigos e quebram coleta.
-- versionamento duplicado/inconsistente (`pyproject.toml` vs `tasks.__init__`).
-- parser de `.git/config` é simples e não cobre casos avançados.
+- task creation (`new_task`) still runs synchronously on the creation screen and may block UI during long operations.
+- navigation flow in `MainApp` uses recursive `push_screen` for task screen refresh.
+- forms (`Setup`/`NewTask`) still use manual validation; no native Textual validation yet.
+- tasks `DataTable` experience can improve (sorting by `Task ID`, width adjustments in smaller terminals).
+- Git authentication/access troubleshooting (SSH/HTTPS) is not yet documented in `README.md`.
+- remote discovery/parsing is already robust, but may need refinements for less common Git scenarios.
+- `get_task_oneliner` depends on `agent` CLI; without it, it falls back to the first line of the description.
 
 ## 9. AI Implementation Guidelines
 
 ### 9.1 Change Strategy
 
-1. Ler arquivos-alvo e mapear impacto.
-2. Implementar alteração mínima.
-3. Validar execução local dos comandos afetados.
-4. Atualizar documentação quando houver mudança funcional.
+1. Read target files and map impact.
+2. Implement minimal change.
+3. Validate local execution of affected commands.
+4. Update documentation when there is a functional change.
 
 ### 9.2 Testing Strategy
 
-Para cada mudança em regra de negócio:
+For each business rule change:
 
-- adicionar/ajustar testes unitários focados;
-- evitar dependência de ambiente externo;
-- usar diretórios temporários e mocks para subprocess.
+- add/adjust focused unit tests;
+- avoid dependence on external environment;
+- use temporary directories and subprocess mocks.
 
 ### 9.3 Documentation Strategy
 
-Atualizar `README.md` sempre que houver:
+Update `README.md` whenever there are:
 
-- novos argumentos CLI;
-- novo fluxo de task;
-- mudança em estrutura de pastas/config;
-- mudança de build/distribuição.
+- new CLI arguments;
+- new task flow;
+- change in folder/config structure;
+- change in build/distribution.
+- always write documentation in English.
 
 ## 10. Acceptance Criteria for AI Tasks
 
-Uma alteração é considerada pronta quando:
+A change is considered done when:
 
-- comportamento principal da TUI segue funcional;
-- não há regressão em fluxos de criação/movimentação de tasks;
-- configuração continua serializando corretamente em YAML;
-- documentação relevante foi atualizada;
-- mudanças são pequenas, legíveis e com intenção clara.
+- the main TUI behavior remains functional;
+- there is no regression in task creation/movement flows;
+- configuration continues to serialize correctly in YAML;
+- relevant documentation is updated;
+- changes are small, readable, and clearly intentional.
 
 ## 11. Suggested Roadmap for AI
 
 ### Short Term
 
-- corrigir imports dos testes para namespace `tasks.*`;
-- adicionar testes para `parse_task_id` e transições de status;
-- alinhar versão do projeto em um único ponto de verdade.
+- migrate task creation (`new_task`) to `Worker` in `NewTask` screen;
+- apply native Textual validation (`textual.validation`) in `Setup` and `NewTask`;
+- improve tasks `DataTable` (sorting and column responsiveness).
 
 ### Medium Term
 
-- robustecer parser Git para múltiplos remotes/protocolos;
-- tornar `Config.__post_init__` mais previsível e testável;
-- melhorar mensagens de erro para falhas de clone/editor.
+- review `MainApp` navigation/refresh flow to reduce `push_screen` recursion;
+- document Git authentication/access troubleshooting (SSH/HTTPS) in `README.md`;
+- refine handling of less common Git scenarios (worktrees and non-standard remotes).
 
 ### Long Term
 
-- export/import de snapshots de tasks;
-- suporte a templates de arquivo `TASK/<id>.md`;
-- integração opcional com providers de work item.
+- export/import of task snapshots;
+- support templates for `TASK/<id>.md` files;
+- optional integration with work item providers.
 
 ## 12. Operational Prompt for Future AI Agents
 
-Use este projeto com as seguintes prioridades:
+Use this project with the following priorities:
 
-1. preservar fluxo atual de usuário na TUI;
-2. preferir simplicidade e mudanças incrementais;
-3. não quebrar estrutura de pastas de tasks;
-4. manter compatibilidade do `.tasks.yaml`;
-5. cobrir alterações com testes portáveis;
-6. manter README consistente com o comportamento real.
+1. preserve current user flow in the TUI;
+2. prefer simplicity and incremental changes;
+3. do not break task folder structure;
+4. keep `.tasks.yaml` compatibility;
+5. cover changes with portable tests;
+6. keep README consistent with real behavior.

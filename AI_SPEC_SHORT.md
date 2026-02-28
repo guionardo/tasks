@@ -1,71 +1,75 @@
 # AI Spec (Short) - Tasks TUI Manager
 
-## Objetivo
+## Objective
 
-Manter e evoluir a aplicação TUI de gerenciamento de tasks com mudanças pequenas, seguras e compatíveis com o comportamento atual.
+Maintain and evolve the task management TUI application with small, safe changes compatible with current behavior.
 
-## Contexto Rápido
+## Quick Context
 
-- App terminal com **Textual**.
-- Cada task clona um repositório Git para workspace local.
-- Status suportados:
+- Terminal app built with **Textual**.
+- Each task clones a Git repository into a local workspace.
+- Supported statuses:
   - `in_progress`
   - `done`
   - `archive` (zip)
 
-## Fluxos Críticos
+## Critical Flows
 
-1. **Run app**: parse CLI -> setup context -> abre `Tasks`.
-2. **New task**: valida id -> resolve versão -> `git clone` -> cria `TASK/<id>.md`.
-3. **Transições**:
+1. **Run app**: parse CLI -> setup context -> open `Tasks`.
+2. **New task**: validate id -> resolve version -> `git clone` -> create `TASK/<id>.md`.
+3. **Transitions**:
    - `in_progress -> done`
    - `done -> in_progress`
    - `done -> delete`
    - `done -> archive`
-4. **Open in editor**: usa `config.editor` (default `cursor`).
+4. **Open in editor**: uses `config.editor` (default `cursor`).
 
-## Contratos que não podem quebrar
+## Contracts that must not break
 
-- Estrutura de pastas:
+- Folder structure:
   - `<tasks_folder>/in_progress/<task-id>-<repo>`
   - `<tasks_folder>/done/<task-id>-<repo>`
   - `<tasks_folder>/archive/<task-id>-<project>-<repo>.zip`
-- Config persistida em `<config-path>/.tasks.yaml`.
-- Atalhos da TUI devem permanecer funcionando.
+- Config persisted in `<config-path>/.tasks.yaml`.
+- TUI shortcuts must keep working.
 
-## Módulos Principais
+## Main Modules
 
 - `tasks.__main__` (entrypoint)
 - `tasks.tui.*` (UI)
-- `tasks.tui.context` (estado e acesso à config)
-- `tasks.service.task_service` (regras de negócio)
+- `tasks.tui.context` (state and config access)
+- `tasks.service.task_service` (business rules)
 - `tasks.config.config` (YAML)
-- `tasks.git.git_config` (metadados Git)
+- `tasks.git.git_config` (Git metadata)
 - `tasks.service.logging_service` (logs)
 
-## Regras para IA
+## Rules for AI
 
-- Priorizar simplicidade: evitar refactors amplos sem necessidade.
-- Tratar erros de IO/subprocess explicitamente.
-- Não alterar layout de dados sem migração/documentação.
-- Atualizar `README.md` quando mudar comportamento funcional.
-- Preferir testes portáveis (sem depender de ambiente local).
+- Prioritize simplicity: avoid large refactors without need.
+- Handle IO/subprocess errors explicitly.
+- Do not change data layout without migration/documentation.
+- Update `README.md` when functional behavior changes.
+- Always write documentation in English.
+- Prefer portable tests (without local environment dependencies).
 
-## Baseline de problemas conhecidos
+## Baseline of known issues
 
-- testes com imports antigos (`service`, `config`, `git`) quebram coleta;
-- `config_service.py` vazio;
-- possível divergência de versão (`pyproject.toml` vs `tasks.__init__`);
-- parser de `.git/config` simples.
+- task creation is still synchronous in `NewTask` screen (can block UI in long operations);
+- main refresh/navigation still uses recursive `push_screen` in `MainApp`;
+- forms still use manual validation (no `textual.validation`);
+- tasks `DataTable` can improve in ID sorting and responsiveness;
+- Git authentication/access troubleshooting (SSH/HTTPS) is not yet documented in `README.md`;
+- Git parsing is already more robust, but may still need refinements for less common cases;
+- `get_task_oneliner` depends on `agent` CLI (with fallback to first line of description).
 
-## Critério de pronto (Definition of Done)
+## Definition of Done
 
-- fluxo principal da TUI continua funcional;
-- sem regressão nas operações de task;
-- configuração YAML permanece compatível;
-- documentação relevante atualizada;
-- mudança clara, pequena e validável.
+- main TUI flow remains functional;
+- no regression in task operations;
+- YAML config remains compatible;
+- relevant documentation is updated;
+- change is clear, small, and verifiable.
 
-## Prompt sugerido para agentes
+## Suggested prompt for agents
 
-"Implemente mudanças incrementais sem quebrar os fluxos de task, preservando estrutura de pastas e compatibilidade do `.tasks.yaml`. Priorize robustez em operações de filesystem/Git, adicione testes portáveis e atualize a documentação quando houver mudança funcional."
+"Implement incremental changes without breaking task flows, preserving folder structure and `.tasks.yaml` compatibility. Prioritize filesystem/Git robustness, add portable tests, and update documentation whenever functional behavior changes."

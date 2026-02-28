@@ -1,39 +1,39 @@
 # Development Guide
 
-Este documento reúne informações técnicas para manutenção e evolução do projeto.
+This document contains technical information for maintenance and evolution of the project.
 
-Para instruções de uso da ferramenta, consulte o `README.md`.
+For user instructions, see `README.md`.
 
-## Arquitetura
+## Architecture
 
-### Entry point e execução
+### Entry point and execution
 
-- Script CLI: `tasks = "tasks.__main__:main"` em `pyproject.toml`.
-- Fluxo principal:
-  1. Parse dos argumentos (`--config-path`, `--tasks-folder`, `--log-level`, `--log-file`).
-  2. Inicialização de contexto/configuração.
-  3. Subida da aplicação Textual (`MainApp`).
+- CLI script: `tasks = "tasks.__main__:main"` in `pyproject.toml`.
+- Main flow:
+  1. Parse arguments (`--config-path`, `--tasks-folder`, `--log-level`, `--log-file`).
+  2. Initialize context/configuration.
+  3. Start Textual application (`MainApp`).
 
-### Camadas principais
+### Main layers
 
 - `src/tasks/tui/`
-  - Telas Textual (`Tasks`, `NewTask`, `Setup`, `Logs`) e estilos `.tcss`.
+  - Textual screens (`Tasks`, `NewTask`, `Setup`, `Logs`) and `.tcss` styles.
 - `src/tasks/service/task_service.py`
-  - Regra de negócio: criar, mover, deletar, arquivar task, abrir editor e clonar repo.
+  - Business rules: create, move, delete, archive task, open editor, clone repo.
 - `src/tasks/config/config.py`
-  - Modelo de configuração e serialização em YAML (`.tasks.yaml`).
+  - Configuration model and YAML serialization (`.tasks.yaml`).
 - `src/tasks/git/git_config.py`
-  - Descoberta de repositórios e parsing de remote.
+  - Repository discovery and remote parsing.
 - `src/tasks/task/task.py`
-  - Entidade `Task` e parser de ID.
+  - `Task` entity and ID parser.
 
-## Detalhes de Configuração
+## Configuration Details
 
-Arquivo de configuração padrão:
+Default configuration file:
 
 - `<config-path>/.tasks.yaml`
 
-Campos relevantes:
+Relevant fields:
 
 - `config_path`
 - `repos`
@@ -42,64 +42,64 @@ Campos relevantes:
 - `last_sync`
 - `tasks_folder`
 
-## Parsing de Git (status atual)
+## Git Parsing (current status)
 
-- Descoberta de remote prioriza `git` CLI:
+- Remote discovery prioritizes `git` CLI:
   - `git remote`
   - `git remote get-url --push`
-  - fallback para `git remote get-url` e `git config --get remote.<name>.url`
-- Se necessário, há fallback para leitura de `.git/config`.
-- `get_repo_names` cobre formatos:
+  - fallback to `git remote get-url` and `git config --get remote.<name>.url`
+- If needed, there is fallback to reading `.git/config`.
+- `get_repo_names` supports:
   - HTTPS
   - SSH (`ssh://...`)
   - SCP-like (`git@host:org/repo.git`)
-  - Azure DevOps com `/_git/`.
+  - Azure DevOps with `/_git/`.
 
-## Logs (implementação)
+## Logs (implementation)
 
-- Inicialização no startup da app.
-- Destinos:
-  - buffer em memória (screen de logs)
-  - arquivo rotativo em `<config-path>/tasks.log`
-- Handler: `TimedRotatingFileHandler` (intervalo de 2 minutos, `backupCount=10`).
+- Initialized at app startup.
+- Destinations:
+  - in-memory buffer (logs screen)
+  - rotating file at `<config-path>/tasks.log`
+- Handler: `TimedRotatingFileHandler` (2-minute interval, `backupCount=10`).
 
-## Build e Empacotamento
+## Build and Packaging
 
 - Backend: `uv_build`
-- Inclusão de fontes e estilos no build:
+- Include source and styles in build:
   - `[tool.uv.build-backend]`
   - `source-include = ["**/*.tcss", "**/*.py"]`
 
-## Testes
+## Tests
 
-Executar:
+Run:
 
 ```bash
 uv run pytest -q
 ```
 
-Executar somente testes não integração:
+Run non-integration tests only:
 
 ```bash
 uv run pytest -q -m "not integration"
 ```
 
-Executar somente testes de integração:
+Run integration tests only:
 
 ```bash
 uv run pytest -q -m "integration"
 ```
 
-Estado local validado:
+Validated local state:
 
 - `7 passed, 5 subtests passed`
 
-Observações:
+Notes:
 
-- Testes de serviço usam mocks para evitar dependência de rede/ambiente.
-- Novos testes devem manter isolamento (fixtures/mocks).
+- Service tests use mocks to avoid environment/network dependencies.
+- New tests should keep the same isolation pattern (fixtures/mocks).
 
-## Estrutura do Projeto
+## Project Structure
 
 ```text
 src/tasks/
@@ -126,13 +126,17 @@ tests/
   service/
 ```
 
-## Limitações Conhecidas
+## Known Limitations
 
-- A descoberta de remote já é mais robusta, mas ainda pode precisar de ajuste para cenários Git incomuns.
-- `get_task_oneliner` depende da CLI `agent`; sem ela, o serviço usa fallback para a primeira linha da descrição.
+- Remote discovery is more robust now, but may still need adjustments for uncommon Git scenarios.
+- `get_task_oneliner` depends on `agent` CLI; without it, the service falls back to the first line of the description.
 
-## Próximos Passos Sugeridos
+## TO-DO
 
-- Separar testes unitários de integração (ex.: `@pytest.mark.integration`).
-- Adicionar `pytest.ini` com marcadores e convenções de descoberta.
-- Documentar troubleshooting para autenticação/acesso Git (SSH/HTTPS).
+- [ ] Replace `RadioSet`-based lists with `DataTable` in task listing screens.
+- [ ] Migrate task creation (`new_task`) to `Worker` in `NewTask` screen to avoid UI blocking during clone/processing.
+- [ ] Review `MainApp` navigation flow to reduce recursive `push_screen` and adopt a more predictable refresh/screen-switching strategy.
+- [ ] Apply native Textual validation (`textual.validation`) in forms (`Setup` and `NewTask`) with inline feedback.
+- [ ] Improve tasks `DataTable` experience (sort by `Task ID`, width adjustments for smaller terminals).
+- [ ] Document Git authentication/access troubleshooting (SSH/HTTPS) in `README.md`.
+- [ ] Refine remote discovery/parsing for less common Git scenarios (worktrees, non-standard remotes, etc.).
