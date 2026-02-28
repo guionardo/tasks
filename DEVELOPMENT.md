@@ -140,3 +140,5 @@ tests/
 - [ ] Improve tasks `DataTable` experience (sort by `Task ID`, width adjustments for smaller terminals).
 - [ ] Document Git authentication/access troubleshooting (SSH/HTTPS) in `README.md`.
 - [ ] Refine remote discovery/parsing for less common Git scenarios (worktrees, non-standard remotes, etc.).
+- [ ] Implement pipy push
+- [ ] Update README to allow install from pipy or from github
