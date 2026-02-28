@@ -30,10 +30,12 @@ from tasks.tui.context import ContextClass
 class NewTask(Screen, ContextClass):
     CSS_PATH = 'new_task_screen.tcss'
     TITLE = 'New Task 2'
+    TAB_ORDER = ['task_details', 'repository', 'creation_tab']
     BINDINGS = [
         ('escape', 'cancel', 'Cancel'),
         ('ctrl+t', 'tab_task_details', 'Task details'),
-        ('ctrl+.', 'next_tab', 'Next tab'),
+        ('ctrl++', 'next_tab', 'Next tab'),
+        ('ctrl+-', 'previous_tab', 'Previous tab'),
         ('ctrl+g', 'generate_oneliner', 'Generate oneliner'),
     ]
     _is_composed: var[bool] = var(False)
@@ -54,18 +56,50 @@ class NewTask(Screen, ContextClass):
         tabbed_content.active = 'task_details'
         self.query_one('#task').focus()
 
-    def action_generate_oneliner(self) -> None:
+    def action_next_tab(self) -> None:
+        self._change_tab(1)
+
+    def action_previous_tab(self) -> None:
+        self._change_tab(-1)
+
+    def _change_tab(self, delta: int) -> None:
+        tabbed_content: TabbedContent = self.query_one('#new_task_main')
+        active_id = tabbed_content.active or self.TAB_ORDER[0]
+        try:
+            current_index = self.TAB_ORDER.index(active_id)
+        except ValueError:
+            current_index = 0
+
+        next_index = (current_index + delta) % len(self.TAB_ORDER)
+        tabbed_content.active = self.TAB_ORDER[next_index]
+
+    def action_cancel(self) -> None:
+        self.dismiss((False, 'Task creation cancelled', ''))
+
+    async def action_generate_oneliner(self) -> None:
         input: Input = self.query_one('#oneliner_description')
         description_input: TextArea = self.query_one('#description')
         description = description_input.text
         if not description:
             self.app.notify('Description is required', severity='error')
             return
+        if input.loading:
+            return
 
         input.loading = True
-        self.oneliner_description = get_task_oneliner(description)
-        input.value = self.oneliner_description
-        input.loading = False
+        try:
+            worker = self.run_worker(
+                lambda: get_task_oneliner(description),
+                thread=True,
+                exclusive=True,
+                group='generate_oneliner',
+            )
+            self.oneliner_description = await worker.wait()
+            input.value = self.oneliner_description
+        except Exception as e:
+            self.app.notify(f'Failed to generate oneliner: {e}', severity='error')
+        finally:
+            input.loading = False
 
     def compose(self) -> ComposeResult:
         self.repos = self.context.get_all_repos()
@@ -134,7 +168,7 @@ class NewTask(Screen, ContextClass):
     def watch_chosen_repository(self) -> None:
         if not self._is_composed:
             return
-        self.query_one('#repository').value = (
+        self.query_one('#repository_input').value = (
             self.chosen_repository.remote_url if self.chosen_repository else ''
         )
         button: RadioButton
@@ -187,7 +221,7 @@ class NewTask(Screen, ContextClass):
                 if event.input.value and '-' not in event.input.value:
                     event = Input.Submitted(event.input, event.value)
                     await self.input_submitted(event)
-            case 'repository':
+            case 'repository_input':
                 for repo in self.repos:
                     if repo.remote_url == event.input.value:
                         self.chosen_repository = repo
@@ -230,7 +264,7 @@ class NewTask(Screen, ContextClass):
                 for repo in self.repos:
                     if repo.repository_name == repository_name:
                         self.chosen_repository = repo
-                        self.query_one('#repository').value = repo.remote_url
+                        self.query_one('#repository_input').value = repo.remote_url
                         break
 
                 if not self.oneliner_description:

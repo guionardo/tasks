@@ -2,9 +2,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.tasks.config.config import Config
+import pytest
+
+from tasks.config.config import Config
 
 
+@pytest.mark.integration
 class TestConfig(unittest.TestCase):
     def test_config(self):
         with tempfile.TemporaryDirectory() as tmp_dir:

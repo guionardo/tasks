@@ -15,23 +15,6 @@ TextArea {
     padding: 1;
 }
 
-#oneliner_description_horizontal {
-    height: auto;
-    width: auto;
-}
-
-
-#generate_oneliner{ 
-    border: round $primary;
-}
-
-
-
-SelectionList {
-    border: round $primary;
-    width: 1fr;
-}
-
 RadioSet {
     width: 1fr;
     height: 1fr;
@@ -58,9 +41,4 @@ Horizontal#creation_horizontal {
     content-align-vertical: bottom;
     width: 100%;
     height: auto;
-}
-
-
-#ui > * {
-    width: 1fr;
 }

@@ -119,8 +119,11 @@ class Tasks(Screen, ContextClass):
 
     def action_new_task(self) -> None:
         def check_new_task_result(result) -> None:
+            if not result:
+                return
             self.app.notify(result[1], severity='success' if result[0] else 'error')
-            self.dismiss(result[2])
+            if result[2]:
+                self.dismiss(result[2])
 
         self.app.push_screen(NewTask(), check_new_task_result)
 
@@ -212,7 +215,7 @@ class Tasks(Screen, ContextClass):
         return result
 
     def can_open_in_editor(self) -> bool:
-        return self.current_task is not None
+        return (self.current_task is not None) or None
 
     def can_move_to_done(self) -> bool:
         return self.current_task and self.current_task.status != TaskStatus.DONE

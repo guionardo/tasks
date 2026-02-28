@@ -19,7 +19,7 @@ class MainApp(App):
         'logs': Logs,
     }
     BINDINGS = [
-        ('q', 'exit', 'Quit the app'),
+        ('escape', 'exit', 'Quit the app'),
         ('s', "push_screen('setup')", 'Setup'),
         ('l', "push_screen('logs')", 'Logs'),
     ]
