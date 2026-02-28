@@ -1,9 +1,8 @@
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Horizontal
 from textual.events import ScreenResume
 from textual.screen import Screen
-from textual.widgets import Button, Header, RichLog,Footer
+from textual.widgets import Button, Footer, Header, RichLog
 
 from tasks.service.logging_service import get_log_bytes
 from tasks.tui.context import ContextClass
@@ -20,13 +19,14 @@ class Logs(Screen, ContextClass):
     BINDINGS = [
         ('escape', 'close', 'Close the logs screen'),
     ]
+
     def compose(self) -> ComposeResult:
         yield Header()
         rl = RichLog(highlight=True)
         rl.border_title = 'Logs'
         yield rl
         yield Footer()
-       
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == 'close':
             self.app.pop_screen()

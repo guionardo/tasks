@@ -76,7 +76,14 @@ class GitConfig:
         for command in [
             ['git', '-C', self.directory, 'remote', 'get-url', '--push', remote_name],
             ['git', '-C', self.directory, 'remote', 'get-url', remote_name],
-            ['git', '-C', self.directory, 'config', '--get', f'remote.{remote_name}.url'],
+            [
+                'git',
+                '-C',
+                self.directory,
+                'config',
+                '--get',
+                f'remote.{remote_name}.url',
+            ],
         ]:
             result = subprocess.run(
                 args=command,
