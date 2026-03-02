@@ -1,5 +1,7 @@
 # Tasks TUI Manager
 
+[![Python package](https://github.com/guionardo/tasks/actions/workflows/python-package.yml/badge.svg)](https://github.com/guionardo/tasks/actions/workflows/python-package.yml)
+
 Terminal application (TUI) to organize development tasks based on Git repositories.
 
 With it, you can:
