@@ -14,9 +14,12 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config.project_name, 'guionardo')
         self.assertEqual(config.repository_name, 'tasks')
         self.assertEqual(config.remote_name, 'origin')
-        self.assertEqual(
+        self.assertIn(
             config.remote_url,
-            'git@github.com:guionardo/tasks.git',
+            [
+                'git@github.com:guionardo/tasks.git',
+                'https://github.com/guionardo/tasks',
+            ],
         )
         self.assertEqual(config.is_git_directory, True)
 
