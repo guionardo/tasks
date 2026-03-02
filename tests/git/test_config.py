@@ -6,18 +6,17 @@ from tasks.git import find_repos, get_root_directory
 from tasks.git.git_config import GitConfig
 
 
-@pytest.mark.integration
 class TestConfig(unittest.TestCase):
     def test_config(self):
-        test_path = '/home/guionardofurlan/dev/tmp/wk-platform-organization-api/api'
+        test_path = __file__
         directory = get_root_directory(test_path)
         config = GitConfig(directory=directory)
-        self.assertEqual(config.project_name, 'Platform-Core')
-        self.assertEqual(config.repository_name, 'wk-platform-organization-api')
+        self.assertEqual(config.project_name, 'guionardo')
+        self.assertEqual(config.repository_name, 'tasks')
         self.assertEqual(config.remote_name, 'origin')
         self.assertEqual(
             config.remote_url,
-            'ssh://titania.wk.com.br:22/WK/Platform-Core/_git/wk-platform-organization-api',
+            'git@github.com:guionardo/tasks.git',
         )
         self.assertEqual(config.is_git_directory, True)
 
@@ -45,12 +44,12 @@ class TestGetRepoNames(unittest.TestCase):
                 ('org', 'repo'),
             ),
             (
-                'ssh://titania.wk.com.br:22/WK/Platform-Core/_git/wk-platform-organization-api',
-                ('Platform-Core', 'wk-platform-organization-api'),
+                'ssh://somewhere.com.br:22/guionardo/tasks/_git/tasks',
+                ('tasks', 'tasks'),
             ),
             (
-                'https://dev.azure.com/org/Platform-Core/_git/wk-platform-organization-api',
-                ('Platform-Core', 'wk-platform-organization-api'),
+                'https://dev.azure.com/guionardo/tasks/_git/tasks',
+                ('tasks', 'tasks'),
             ),
         ]
         for remote_url, expected in cases:
