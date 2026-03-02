@@ -724,7 +724,7 @@ wheels = [
 
 [[package]]
 name = "tasks"
-version = "0.1.7"
+version = "0.1.8"
 source = { editable = "." }
 dependencies = [
     { name = "pytest" },
@@ -734,6 +734,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "pytest" },
     { name = "textual-dev" },
 ]
 
@@ -745,7 +746,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "textual-dev", specifier = ">=1.8.0" }]
+dev = [
+    { name = "pytest", specifier = ">=9.0.2" },
+    { name = "textual-dev", specifier = ">=1.8.0" },
+]
 
 [[package]]
 name = "textual"
