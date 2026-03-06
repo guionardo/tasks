@@ -2,6 +2,7 @@ import os
 import re
 import subprocess
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Generator
 from urllib.parse import urlparse
 
@@ -154,13 +155,13 @@ class GitConfig:
         return ''
 
 
-def find_repos(base_path: str) -> Generator[GitConfig, None, None]:
+def find_repos(base_path: str | Path) -> Generator[GitConfig, None, None]:
     for root, dirs, _ in os.walk(base_path):
         if '.git' in dirs:
             yield GitConfig(directory=root)
 
 
-def get_root_directory(directory: str) -> str:
+def get_root_directory(directory: str) -> str | None:
     directory = os.path.abspath(directory)
 
     current = directory

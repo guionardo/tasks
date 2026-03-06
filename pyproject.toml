@@ -1,6 +1,6 @@
 [project]
 name = "tasks"
-version = "0.1.8"
+version = "0.1.10"
 description = "Textual TUI for Git-based task workspaces with create, move, and archive workflows."
 authors = [{ name = "Guionardo Furlan", email = "guionardo@gmail.com" }]
 readme = "README.md"
@@ -17,6 +17,7 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 source-include = ["**/*.tcss", "**/*.py"]
+source-exclude = [".venv"]
 
 [tool.ruff.format]
 quote-style = "single"

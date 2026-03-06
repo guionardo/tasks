@@ -1,3 +1,4 @@
+import typing
 from pathlib import Path
 
 from textual import on
@@ -34,8 +35,6 @@ class NewTask(Screen, ContextClass):
     BINDINGS = [
         ('escape', 'cancel', 'Cancel'),
         ('ctrl+t', 'tab_task_details', 'Task details'),
-        ('ctrl++', 'next_tab', 'Next tab'),
-        ('ctrl+-', 'previous_tab', 'Previous tab'),
         ('ctrl+g', 'generate_oneliner', 'Generate oneliner'),
     ]
     _is_composed: var[bool] = var(False)
@@ -56,23 +55,6 @@ class NewTask(Screen, ContextClass):
         tabbed_content.active = 'task_details'
         self.query_one('#task').focus()
 
-    def action_next_tab(self) -> None:
-        self._change_tab(1)
-
-    def action_previous_tab(self) -> None:
-        self._change_tab(-1)
-
-    def _change_tab(self, delta: int) -> None:
-        tabbed_content: TabbedContent = self.query_one('#new_task_main')
-        active_id = tabbed_content.active or self.TAB_ORDER[0]
-        try:
-            current_index = self.TAB_ORDER.index(active_id)
-        except ValueError:
-            current_index = 0
-
-        next_index = (current_index + delta) % len(self.TAB_ORDER)
-        tabbed_content.active = self.TAB_ORDER[next_index]
-
     def action_cancel(self) -> None:
         self.dismiss((False, 'Task creation cancelled', ''))
 
@@ -89,7 +71,9 @@ class NewTask(Screen, ContextClass):
         input.loading = True
         try:
             worker = self.run_worker(
-                lambda: get_task_oneliner(description),
+                lambda: get_task_oneliner(
+                    description, self.context.config.cursor_api_key
+                ),
                 thread=True,
                 exclusive=True,
                 group='generate_oneliner',
@@ -162,15 +146,43 @@ class NewTask(Screen, ContextClass):
         yield Footer()
         self._is_composed = True
 
+    @property
+    def repository_url(self) -> str:
+        return (
+            self.chosen_repository.remote_url
+            if self.chosen_repository
+            else self.query_one('#repository_input').value
+        )
+
+    @repository_url.setter
+    def repository_url(self, value: str) -> None:
+        if self.chosen_repository and self.chosen_repository.remote_url == value:
+            return
+        input: Input = self.query_one('#repository_input')
+        input.value = value
+
+        chosen_repository_name = ''
+        for repo in self.repos:
+            if repo.remote_url == value:
+                self.chosen_repository = repo
+                chosen_repository_name = repo.repository_name
+                break
+        else:
+            self.chosen_repository = None
+
+        for i, button in enumerate(self.query_one('#repos').query('RadioButton')):
+            button.value = self.repos[i].repository_name == chosen_repository_name
+
     def on_mount(self) -> None:
         self.query_one('#task').focus()
 
     def watch_chosen_repository(self) -> None:
         if not self._is_composed:
             return
-        self.query_one('#repository_input').value = (
+        self.repository_url = (
             self.chosen_repository.remote_url if self.chosen_repository else ''
         )
+
         button: RadioButton
         chosen_repository_name = (
             self.chosen_repository.repository_name if self.chosen_repository else ''
@@ -187,7 +199,12 @@ class NewTask(Screen, ContextClass):
         if error_message:
             return f"""# Task Creation: {error_message}"""
 
-        repository_description = f'{self.chosen_repository.project_name}/{self.chosen_repository.repository_name}'
+        if self.chosen_repository:
+            repository_description = f'{self.chosen_repository.project_name}/{self.chosen_repository.repository_name}'
+        else:
+            repository_description = (
+                self.query_one('#repository_input').value or 'No repository chosen'
+            )
 
         return f"""# Task Creation: {self.task_id}
 
@@ -279,7 +296,7 @@ class NewTask(Screen, ContextClass):
         input.value = self.chosen_repository.remote_url
 
     @on(Button.Pressed)
-    async def generate_oneliner(self, event: Button.Pressed) -> None:
+    async def button_pressed(self, event: Button.Pressed) -> None:
         match event.button.id:
             case 'create':
                 error_message, focus_function = self.new_task_validation()
@@ -288,14 +305,17 @@ class NewTask(Screen, ContextClass):
                     focus_function()
                     return
 
+                repository_url = self.repository_url
                 task, message = new_task(
                     self.context.config,
                     self.task_id,
-                    self.chosen_repository.remote_url,
+                    repository_url,
                     self.task_markdown,
                 )
                 if task:
-                    self.app.notify(message, title='Task created', severity='success')
+                    self.app.notify(
+                        message, title='Task created', severity='information'
+                    )
                     self.dismiss((True, message, task.id))
                 else:
                     self.app.notify(
@@ -303,11 +323,15 @@ class NewTask(Screen, ContextClass):
                     )
                     self.dismiss((False, message, ''))
 
-    def new_task_validation(self) -> str:
+    def new_task_validation(self) -> tuple[str, typing.Callable | None]:
         if '-' not in self.task_id:
             return 'Task ID is not valid', lambda: self.query_one('#task').focus()
         if not self.chosen_repository:
-            return 'Repository is not chosen', lambda: self.query_one('#repos').focus()
+            repository_url_input = self.query_one('#repository_input')
+            if not repository_url_input.value:
+                return 'Repository is not chosen', lambda: self.query_one(
+                    '#repos'
+                ).focus()
         if not self.task_markdown:
             return 'Task description is not valid', lambda: self.query_one(
                 '#description'

@@ -21,6 +21,7 @@ class Config:
     last_sync: int = field(default=0)
     tasks_directory: str = field(default='')
     editor: str = field(default='cursor')
+    cursor_api_key: str = field(default='')
     log_level: str = field(default=logging.INFO)
     log_file: str = field(default=(BASE_CONFIG_PATH / 'tasks.log').as_posix())
 
@@ -160,6 +161,10 @@ def _marshal_config(config: Config) -> dict[str, Any]:
         'base_repos_directory': str(config.base_repos_directory),
         'last_sync': int(config.last_sync),
         'tasks_folder': str(config.tasks_directory),
+        'editor': str(config.editor),
+        'cursor_api_key': str(config.cursor_api_key),
+        'log_level': str(config.log_level),
+        'log_file': str(config.log_file),
     }
 
 
@@ -199,6 +204,12 @@ def load_config_from_file(config_file: str | Path) -> Config:
     config.base_repos_directory = str(data.get('base_repos_directory', ''))
     config.last_sync = int(data.get('last_sync', 0))
     config.tasks_directory = str(data.get('tasks_folder', ''))
+    config.editor = str(data.get('editor', 'cursor'))
+    config.cursor_api_key = str(data.get('cursor_api_key', ''))
+    config.log_level = str(data.get('log_level', logging.INFO))
+    config.log_file = str(
+        data.get('log_file', (Path(config.config_path) / 'tasks.log').as_posix())
+    )
 
     if not config.unique_repos:
         config.unique_repos = {

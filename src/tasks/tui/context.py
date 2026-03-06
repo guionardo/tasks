@@ -23,7 +23,7 @@ class Context:
             tasks = [
                 t
                 for t in [
-                    read_task_from_directory(p)
+                    read_task_from_directory(p, self.config)
                     for p in tasks_directory.iterdir()
                     if p.is_dir()
                 ]

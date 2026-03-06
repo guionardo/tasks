@@ -6,11 +6,11 @@
     "configurations": [
         {
             "name": "Python: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/tasks/__main__.py",
             "console": "integratedTerminal",
-             "cwd": "${workspaceFolder}/src/tasks",
+            "cwd": "${workspaceFolder}/src/tasks",
             "justMyCode": true
         }
     ]

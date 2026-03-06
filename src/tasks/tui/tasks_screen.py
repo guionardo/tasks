@@ -50,13 +50,24 @@ class Tasks(Screen, ContextClass):
         super().__init__(*args, **kwargs)
 
     def compose(self) -> ComposeResult:
+        ids = set()
+
+        def get_task_id(task: Task, prefix: str) -> str:
+            id = f'{prefix}_{task.id}'
+            index = 0
+            while id in ids:
+                index += 1
+                id = f'{prefix}_{task.id}_{index}'
+            ids.add(id)
+            return id
+
         yield Header()
         with Horizontal():
             self.doing_tasks = self.context.get_doing_tasks(refresh=self.refresh_tasks)
             tasks = (
                 RadioButton(
                     label=task.short_name,
-                    id=f'doing_tasks_radio_{task.id}',
+                    id=get_task_id(task, 'doing_tasks_radio'),
                     tooltip=task_tooltip(task),
                     compact=True,
                     value=self.selected_task_id == task.id,
@@ -71,7 +82,7 @@ class Tasks(Screen, ContextClass):
             tasks = (
                 RadioButton(
                     label=task.short_name,
-                    id=f'done_tasks_radio_{task.id}',
+                    id=get_task_id(task, 'done_tasks_radio'),
                     tooltip=task_tooltip(task),
                     compact=True,
                     value=self.selected_task_id == task.id,

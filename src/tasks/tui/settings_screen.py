@@ -5,22 +5,50 @@ from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Header, Input
 
-from tasks.tui.context import ContextClass, get_context
+from tasks.tui.context import ContextClass
 
 
 class Setup(Screen, ContextClass):
-    tasks_directory: str
-    base_repos_directory: str
-    editor: str
+    @property
+    def tasks_directory(self) -> str:
+        return self.query_one('#tasks_directory', Input).value
+
+    @tasks_directory.setter
+    def tasks_directory(self, value: str) -> None:
+        self.query_one('#tasks_directory', Input).value = validate_directory(value)
+
+    @property
+    def base_repos_directory(self) -> str:
+        return self.query_one('#base_repos_directory', Input).value
+
+    @base_repos_directory.setter
+    def base_repos_directory(self, value: str) -> None:
+        self.query_one('#base_repos_directory', Input).value = validate_directory(value)
+
+    @property
+    def editor(self) -> str:
+        return self.query_one('#editor', Input).value
+
+    @editor.setter
+    def editor(self, value: str) -> None:
+        self.query_one('#editor', Input).value = value
+
+    @property
+    def cursor_api_key(self) -> str:
+        return self.query_one('#cursor_api_key', Input).value
+
+    @cursor_api_key.setter
+    def cursor_api_key(self, value: str) -> None:
+        self.query_one('#cursor_api_key', Input).value = value
 
     def compose(self) -> ComposeResult:
-        yield Header('Settings')
-        self.tasks_directory = self.context.config.tasks_directory
+        yield Header()
+
         with Vertical():
             tasks_directory = Input(
                 placeholder='Tasks directory',
                 id='tasks_directory',
-                value=str(get_context().config.tasks_directory),
+                value=str(self.context.config.tasks_directory),
             )
             tasks_directory.border_title = 'Tasks directory'
             tasks_directory.border_subtitle = (
@@ -31,7 +59,7 @@ class Setup(Screen, ContextClass):
             base_repos_directory = Input(
                 placeholder='Base repos directory',
                 id='base_repos_directory',
-                value=str(get_context().config.base_repos_directory),
+                value=str(self.context.config.base_repos_directory),
             )
             base_repos_directory.border_title = 'Base repos directory'
             base_repos_directory.border_subtitle = (
@@ -42,20 +70,29 @@ class Setup(Screen, ContextClass):
             editor = Input(
                 placeholder='Editor',
                 id='editor',
-                value=str(get_context().config.editor),
+                value=str(self.context.config.editor),
             )
             editor.border_title = 'Editor'
             editor.border_subtitle = 'code, cursor, etc.'
             yield editor
 
+            cursor_api = Input(
+                placeholder='Cursor API key (optional)',
+                id='cursor_api_key',
+                value=str(self.context.config.cursor_api_key),
+            )
+            cursor_api.border_title = 'Cursor API key (optional)'
+            yield cursor_api
+
             with Horizontal():
                 yield Button('Save', variant='primary', id='save')
                 yield Button('Cancel', variant='default', id='cancel')
 
-    def on_mount(self, event) -> None:
-        self.tasks_directory = get_context().config.tasks_directory
-        self.base_repos_directory = get_context().config.base_repos_directory
-        self.editor = get_context().config.editor
+    def on_mount(self, _) -> None:
+        self.tasks_directory = self.context.config.tasks_directory
+        self.base_repos_directory = self.context.config.base_repos_directory
+        self.editor = self.context.config.editor
+        self.cursor_api_key = self.context.config.cursor_api_key
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == 'save':
@@ -67,20 +104,24 @@ class Setup(Screen, ContextClass):
                 self.app.notify('Please fill in all fields', severity='error')
                 return
             if (
-                self.tasks_directory == get_context().config.tasks_directory
+                self.tasks_directory == self.context.config.tasks_directory
                 and self.base_repos_directory
-                == get_context().config.base_repos_directory
-                and self.editor == get_context().config.editor
+                == self.context.config.base_repos_directory
+                and self.editor == self.context.config.editor
+                and self.cursor_api_key == self.context.config.cursor_api_key
             ):
-                self.app.notify('No changes to save', severity='info')
+                self.app.notify('No changes to save', severity='information')
                 self.app.pop_screen()
                 return
 
-            get_context().config.tasks_directory = self.tasks_directory
-            get_context().config.base_repos_directory = self.base_repos_directory
-            get_context().config.editor = self.editor
-            get_context().config.save()
-            self.app.notify('Setup saved - Please restart the app', severity='success')
+            self.context.config.tasks_directory = self.tasks_directory
+            self.context.config.base_repos_directory = self.base_repos_directory
+            self.context.config.editor = self.editor
+            self.context.config.cursor_api_key = self.cursor_api_key
+            self.context.config.save()
+            self.app.notify(
+                'Setup saved - Please restart the app', severity='information'
+            )
 
         self.app.pop_screen()
 
@@ -96,7 +137,8 @@ class Setup(Screen, ContextClass):
                 self.editor = event.input.value
 
 
-def validate_directory(directory: str) -> str:
+def validate_directory(directory: str | Path) -> str:
     directory = Path(directory).expanduser()
     if directory.is_dir():
         return directory.absolute().as_posix()
+    return ''

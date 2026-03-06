@@ -59,7 +59,7 @@ def new_task(
         f'* Project name: {project_name} / Repository name: {repository_name}'
     )
     new_task_folder = tasks_folder / f'{task_id}-{repository_name}'
-    task: Task = None
+    task: Task | None = None
     try:
         new_task_folder = clone_repository(remote_url, new_task_folder)
         task_dict['git'] = f'* Cloned repository {remote_url} to {new_task_folder}'
@@ -88,7 +88,7 @@ def new_task(
             datetime.now(),
         )
 
-        task.oneliner = get_task_oneliner(task_description)
+        task.oneliner = get_task_oneliner(task_description, config.cursor_api_key)
     except Exception as e:
         task_dict['error'] = f'* Error: {e}'
 
@@ -100,9 +100,9 @@ def new_task(
 
 def get_task_data_candidate(
     config: Config, task_id: str, repository_name: str
-) -> tuple[str, str, str]:
+) -> tuple[str, str, str, str, str]:
     """Get the last task data candidate for a given task id
-    Returns the new task id, last task description, last task oneliner, and repository name"""
+    Returns the new task id, last task description, last task oneliner, repository name and repository folder"""
     task_number, task_version = parse_task_id(task_id)
     new_task_folder = (
         Path(config.doing_tasks_directory) / f'{task_id}-{repository_name}'
@@ -139,7 +139,7 @@ def get_task_data_candidate(
     )
 
 
-def read_task_from_directory(directory: Path) -> Task | None:
+def read_task_from_directory(directory: Path, config: Config) -> Task | None:
     # Ex: tasks/in_progress/00001-0-repository_name
     logger = get_logger(__name__)
     logger.info('Reading task: %s', directory)
@@ -179,7 +179,7 @@ def read_task_from_directory(directory: Path) -> Task | None:
         if task_file.exists():
             with open(task_file.as_posix()) as f:
                 task_description = f.read().strip()
-            task.oneliner = get_task_oneliner(task_description)
+            task.oneliner = get_task_oneliner(task_description, config.cursor_api_key)
             with open(oneliner_file.as_posix(), 'w') as f:
                 f.write(task.oneliner.strip())
         else:
@@ -226,7 +226,7 @@ def get_existing_tasks(config: Config, task_number: str) -> list[Task]:
     for task_folder in [config.doing_tasks_directory, config.done_tasks_directory]:
         for task_folder in task_folder.iterdir():
             if task_folder.is_dir():
-                task = read_task_from_directory(task_folder)
+                task = read_task_from_directory(task_folder, config)
                 if task and task.id.startswith(f'{task_number}-'):
                     tasks.append(task)
                     logger.info(' + Found task: %s', task)
@@ -335,7 +335,7 @@ def archive_task(config: Config, task: Task) -> str | None:
         raise ValueError(f'Failed to archive task: {e}')
 
 
-def get_task_oneliner(description: str) -> str:
+def get_task_oneliner(description: str, api_key: str) -> str:
     logger = get_logger(__name__)
     if not description:
         logger.warning('oneliner: no description')
@@ -344,7 +344,9 @@ def get_task_oneliner(description: str) -> str:
         logger.warning('oneliner: using description as is')
         return description.strip()
     default_oneliner = ''.join(description.splitlines()[:1])
-    if not shutil.which('agent'):  # Use cursor agent to generate the oneliner
+    if (
+        not shutil.which('agent') or not api_key
+    ):  # Use cursor agent to generate the oneliner
         logger.warning('oneliner: no agent found. using default oneliner')
         return default_oneliner
 
@@ -364,6 +366,8 @@ def get_task_oneliner(description: str) -> str:
                 'json',
                 '--print',
                 '--trust',
+                '--api-key',
+                api_key,
                 prompt,
             ],
             capture_output=True,
@@ -373,7 +377,7 @@ def get_task_oneliner(description: str) -> str:
         if result.returncode != 0:
             logger.warning(
                 'oneliner: failed to get oneliner: %s',
-                result.stderr.decode('utf-8', errors='replace'),
+                result.stderr,
             )
             return default_oneliner
 

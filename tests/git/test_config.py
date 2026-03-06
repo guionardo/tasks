@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 
 import pytest
 
@@ -27,7 +28,9 @@ class TestConfig(unittest.TestCase):
 @pytest.mark.integration
 class TestFindRepos(unittest.TestCase):
     def test_find_repos(self):
-        for repo in find_repos('/home/guionardofurlan/dev'):
+        """Test find repos in a directory"""
+        local_repos_directory = Path.home() / 'dev'
+        for repo in find_repos(local_repos_directory):
             print(repo)
 
 
