@@ -1,4 +1,4 @@
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from pathlib import Path
 
 default_config_path = Path.home() / '.config' / 'tasks'
@@ -29,13 +29,14 @@ parser.add_argument(
 )
 
 
-def get_args() -> Namespace:
+def get_args() -> tuple[Path, Path, str, Path]:
     args = parser.parse_args()
 
     config_path = Path(args.config_path).expanduser()
     tasks_folder = Path(args.tasks_folder).expanduser()
+    log_file = Path(args.log_file).expanduser()
 
     config_path.mkdir(parents=True, exist_ok=True)
     tasks_folder.mkdir(parents=True, exist_ok=True)
 
-    return config_path, tasks_folder, args.log_level, args.log_file
+    return config_path, tasks_folder, args.log_level, log_file

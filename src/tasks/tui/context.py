@@ -64,15 +64,15 @@ class ContextClass:
         return get_context()
 
 
-_context: Context = None
+_context: Context | None = None
 
 
 def setup_context(
-    config_path: str = Path.home() / '.config' / 'tasks',
-    tasks_directory: str = Path.home() / 'tasks',
+    config_path: Path = Path.home() / '.config' / 'tasks',
+    tasks_directory: Path = Path.home() / 'tasks',
     log_level: str = 'INFO',
-    log_file: str = Path.home() / '.config' / 'tasks' / 'tasks.log',
-):
+    log_file: Path = Path.home() / '.config' / 'tasks' / 'tasks.log',
+) -> None:
     global _context
 
     config_file = Config.config_file_name(config_path)
