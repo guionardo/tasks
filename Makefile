@@ -21,29 +21,16 @@ help: ## Display this help
 
 ##@ Dependencies
 
-deps: install-pre-commit install-commitlint ## Installs/updates dependencies
-	@echo "\n🚀 \033[30;44m  ALL DEPENDENCIES ARE INSTALLED  \033[0m"
-
-install-pre-commit:
-	@echo  "\n🛠️  \033[30;42m INSTALLING PRE-COMMIT \033[0m"
-	@if command -v pre-commit >/dev/null 2>&1; then \
-		echo "pre-commit already installed, updating..."; \
-		pre-commit autoupdate; \
-	else \
-		if [ "$(PKG_MGR)" = "apt" ]; then \
-			sudo apt install -y pre-commit; \
-		elif [ "$(PKG_MGR)" = "yum" ]; then \
-			sudo yum install -y pre-commit; \
-		elif [ "$(PKG_MGR)" = "apk" ]; then \
-			sudo apk add --no-cache pre-commit; \
-		else \
-			echo "Please install pre-commit manually: pip install pre-commit"; \
-			exit 1; \
-		fi; \
-	fi
-	@pre-commit autoupdate || true
+setup: ## Setup the project
+	@echo  "\n🛠️  \033[30;42m SETUPING PROJECT \033[0m"
+	@uv sync
+	@echo "✅  pre commit setup"
+	@pre-commit autoupdate
 	@pre-commit install -t commit-msg -t pre-commit || echo "⚠️  Pre-commit hooks installation skipped (may need manual setup)"
-	@echo "✅  PRE-COMMIT INSTALLED"
+	@echo "✅  PROJECT SETUP"
+
+
+
 
 
 
