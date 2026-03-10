@@ -50,11 +50,15 @@ class Context:
         )
 
     def get_all_repos(self) -> list[GitConfig]:
+        self.config.sync_repos()
+
         if not self.config.repos:
             self.config.add_repos_from_base_directory(self.config.base_repos_directory)
             self.config.update()
             self.config.save()
+
         repos = {repo.repository_name: repo for repo in self.config.repos}
+
         return list(repos.values())
 
 

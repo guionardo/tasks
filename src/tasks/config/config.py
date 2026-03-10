@@ -24,6 +24,9 @@ class Config:
     cursor_api_key: str = field(default='')
     log_level: str = field(default=logging.INFO)
     log_file: str = field(default=(BASE_CONFIG_PATH / 'tasks.log').as_posix())
+    repo_samples: dict[str, str] = field(
+        default_factory=dict
+    )  # repository name -> local path
 
     def __post_init__(self):
         config_file = Path(self.config_path) / CONFIG_FILE
@@ -45,6 +48,7 @@ class Config:
             self.add_repos_from_base_directory(self.base_repos_directory)
 
         self.update()
+        self.update_repo_samples()
 
     def _find_repos(self):
         """Read all repos from base_repos_directory and updates the unique_repos dictionary"""
@@ -106,6 +110,24 @@ class Config:
         p.mkdir(parents=True, exist_ok=True)
         return p
 
+    def sync_repos(self):
+        """Read all repos from local folders and update the repos list"""
+        self.repos.clear()
+        self.unique_repos.clear()
+        for repo_folder in [self.base_repos_directory, self.tasks_directory]:
+            for git_config in find_repos(repo_folder):
+                self.repos.append(git_config)
+                self.unique_repos[git_config.repository_name] = git_config.remote_url
+                if not self.base_repos_directory:
+                    self.base_repos_directory = git_config.directory
+                elif str(self.base_repos_directory).startswith(
+                    str(git_config.directory)
+                ):
+                    self.base_repos_directory = git_config.directory
+
+        # self.update()
+        # self.update_repo_samples()
+
     def add_repos_from_base_directory(self, base_directory: str) -> 'Config':
         base_directory = Path(base_directory)
 
@@ -119,6 +141,13 @@ class Config:
             elif str(self.base_repos_directory).startswith(str(repo.directory)):
                 self.base_repos_directory = repo.directory
         return self
+
+    def update_repo_samples(self):
+        self.repo_samples.clear()
+        self.add_repos_from_base_directory(self.base_repos_directory)
+
+        for repo in self.repos:
+            self.repo_samples[repo.repository_name] = repo.directory
 
 
 _config: Config = None
